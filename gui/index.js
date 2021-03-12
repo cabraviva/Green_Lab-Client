@@ -11,7 +11,8 @@ function createWindow () {
       enableRemoteModule: true
     },
     frame: false,
-    titleBarStyle: 'hidden'
+    titleBarStyle: 'hidden',
+    icon: `${__dirname}/app/icon.png`
   })
 
   // and load the index.html of the app.

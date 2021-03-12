@@ -54,9 +54,46 @@ nav
       padding: 1%
       font-size: 120%
 
+      &.active
+        background: rgba(11,11,11, 0.7)
+
       &:hover
         cursor: pointer
         background: rgba(11,11,11, 0.7)
+
+::-webkit-scrollbar
+  width: 5px
+  height: 5px
+
+::-webkit-scrollbar-button
+  width: 0px
+  height: 0px
+
+::-webkit-scrollbar-thumb
+  background: #e1e1e1
+  border: 0px none #ffffff
+  border-radius: 50px
+
+::-webkit-scrollbar-thumb:hover
+  background: #ffffff
+
+::-webkit-scrollbar-thumb:active
+  background: #000000
+
+::-webkit-scrollbar-track
+  background: #666666
+  border: 0px none #ffffff
+  border-radius: 50px
+
+::-webkit-scrollbar-track:hover
+  background: #666666
+
+::-webkit-scrollbar-track:active
+  background: #333333
+
+::-webkit-scrollbar-corner
+  background: transparent
+
 
 main
   width: 100 - $nav-width - 6vw
@@ -64,13 +101,23 @@ main
   position: fixed
   right: 0
   bottom: 0
+  overflow-y: auto
+  overflow-x: hidden
   .content
     padding-left: 3vw
     padding-right: 3vw
     padding-top: 3vh
     padding-bottom: 3vh
-    width: 100%
+    width: 86%
     height: 100%
+    color: #fff
+    font-size: 200%
+
+    a
+      color: #1e7509
+      text-decoration: none
+      &:hover
+        text-decoration: underline
 
     &.flex
       display: flex
@@ -149,6 +196,32 @@ button:hover
 #close-btn:hover
   background: rgb(255, 0, 0)
 
+skinsearch
+  display: flex
+  justify-content: space-around
+  align-items: center
+  *
+    padding: 2%
+    margin-left: 1vw
+    text-align: center
+
+  input
+    width: 30vw
+  ._b:hover
+    background: none
+    background-color: none
+    color: #404040
+
+skinbox
+  ul
+    display: flex
+    justify-content: space-around
+    flex-wrap: wrap
+    align-items: center
+    li
+      list-style: none
+      text-align: center
+
 button i
   color: white
 
@@ -157,3 +230,8 @@ button i
   bottom: 0
   left: 0
   height: 95vh
+
+.world
+  padding: 3vw
+  background: rgba(16,16,18,0.4)
+  margin-bottom: 1vh

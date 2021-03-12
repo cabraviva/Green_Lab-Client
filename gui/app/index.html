@@ -5,7 +5,7 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
     <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/greencoder001/queryjs@latest/dist/query.js"></script>
+    <script type="text/javascript" src="query.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/greencoder001/zGET@latest/dist/bundle.js"></script>
     <title>Green_Lab Client</title>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css" integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
@@ -15,7 +15,7 @@
     <div id="menu-bar">
      <div class="left" role="menu">
        <button onclick="win.getCurrentWindow().toggleDevTools()" class="menubar-btn" id="menu-btn" onclick="win.getCurrentWindow().toggleDevTools()"><i class="fas fa-terminal"></i></button>
-       <h4>Green_Lab Client</h4>
+       <h2>Green_Lab Client</h2>
      </div>
      <div class="right">
        <button class="menubar-btn" id="minimize-btn" onclick="win.minimizeWindow()"><i class="fas fa-window-minimize"></i></button>
@@ -37,7 +37,8 @@
          <li onclick="loadPage('servers')">Servers</li>
          <li onclick="loadPage('mods')">Mods</li>
          <li onclick="loadPage('packs')">Packs</li>
-         <li onclick="loadPage('settings')">Settings</li>
+         <li onclick="loadPage('skins')">Skins</li>
+         <li onclick="loadPage('about')">About</li>
        </ul>
      </nav>
 

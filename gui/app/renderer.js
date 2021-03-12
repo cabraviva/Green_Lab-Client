@@ -1,4 +1,6 @@
-/* global waitfor, zGET, XMLHttpRequest, $$ */
+/* global waitfor, zGET, $$ */
+
+const mojang = require('mojang')
 const random = require('./random.js')
 const getOptifineDownloadURL = require('./optifine-url.js')
 const dlFile = require('./dlfile.js')
@@ -7,21 +9,32 @@ const os = require('os-utils')
 const _os = require('os')
 const path = require('path')
 const win = require('./win.js')
+const opn = require('opn')
+const nbt = require('nbt')
+const { v4: uuidv4 } = require('uuid')
+
+function changeSkin (skinID) {
+  console.log('[SKINS] Changing to skin ' + skinID)
+  getUUID(getAccount().name, uuid => {
+    getAccessTokenForMC().then(({ accessToken }) => {
+      const stream = fs.createReadStream(`${getAppData()}/.Green_Lab-Client-MC/skins/${skinID}`)
+      mojang.uploadSkin({ accessToken }, uuid, stream, false).then(() => {
+        console.log('[SKINS] Changed to skin ' + skinID)
+      }).catch((err) => {
+        console.error(err)
+      })
+    })
+  })
+}
+
+window.opn = opn
+window.nbt = nbt
+
 win.maximizeWindow()
 const { Client, Authenticator } = require('minecraft-launcher-core')
 
-// const { app, Menu } = require('electron')
-// const isMac = process.platform === 'darwin'
-//
-// const template = [
-//   {
-//     label: 'File',
-//     submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
-//   }
-// ]
-
-// const menu = Menu.buildFromTemplate(template)
-// Menu.setApplicationMenu(menu)
+var runningVanilla = false
+window.rmc = runningVanilla
 
 function auth () {
   const acc = getAccount()
@@ -58,9 +71,9 @@ function launchVanilla (dir = '', version = { number: getLatestVersion().release
   launcher.launch(opts)
   launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
   launcher.on('data', (e) => {
-    if (e.includes('[Render thread/INFO]: Stopping!')) {
+    if (e.includes('[Render thread/INFO]: Stopping!') && (!e.includes('<'))) {
       // Stopping
-      launchingVanilla = false
+      runningVanilla = false
       $$('centeredplaybtn').innerText = 'Play'
     }
     console.log('[DATA]' + e)
@@ -68,6 +81,8 @@ function launchVanilla (dir = '', version = { number: getLatestVersion().release
 
   return launcher
 }
+
+window.launchVanilla = launchVanilla
 
 function mcRam () {
   return {
@@ -87,6 +102,7 @@ async function getAccessTokenForMC () {
     password: account.pw
   }, { 'Content-Type': 'application/json' })).data
 }
+window.getAccessTokenForMC = getAccessTokenForMC
 
 var currentPage = 'game'
 
@@ -97,31 +113,165 @@ function loadPage (id) {
   })
 }
 
-var runningVanilla = false
-
 const pages = {
   game: async () => {
     return `
       <ul class="top-nav">
-        <li>OptiFine</li>
-        <li>Vanilla</li>
-        <li>Fabric</li>
-        <li>Forge</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')">OptiFine</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')" class="active">Vanilla</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')">Fabric</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')">Forge</li>
       </ul>
-      <div class="content flex">
+      <div class="content flex vanilla" style="overflow:hidden;padding:0;margin:0">
         <centeredplaybtn onclick="if(runningVanilla==false){this.innerText='Running';runningVanilla=true;launchVanilla()}">Play</centeredplaybtn>
       </div>
     `
   },
-  settings: async () => {
+  worlds: () => {
+    return new Promise((resolve, reject) => {
+      let final = ''
+      let worlds = []
+      allWorlds(w => {
+        worlds.push(w)
+      }).then(() => {
+        worlds = worlds.filter((elem) => { return !elem.endsWith('.zip') })
+        let i = 0
+        for (const world of worlds) {
+          let leveldat = null
+          nbt.parse(fs.readFileSync(path.join(world, 'level.dat')), (err, data) => {
+            if (err) return reject(window.alert('An error occurs! INVALID_LEVELDAT_NBT. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world))
+            leveldat = data
+
+            console.warn(world)
+
+            final += `
+              <div class="world">
+                <h2>${leveldat.value.Data.value.LevelName.value}</h2>
+                <span class="version">${(leveldat?.value?.Data?.value?.Version?.value?.Name?.value) || 'Unknown Version'}</span>
+              </div>
+            `
+            i += 1
+
+            if (i >= worlds.length) {
+              resolve(`
+                <div class="content">
+                  ${final}
+                </div>
+              `)
+            }
+          })
+        }
+      })
+    })
+  },
+  skins: async () => {
+    let allSkins = ''
+    const skinIndex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
+    skinIndex.forEach((skin, index) => {
+      allSkins += `
+        <skin skinfile="${skin.file}">
+          <h4>${skin.name}</h4>
+          <img onclick="changeSkin('${skin.file}')" style="cursor:pointer; "src="file://${getAppData()}/.Green_Lab-Client-MC/skins/${skin.file}" alt="${skin.name}" />
+        </skin>
+      `
+    })
+
     return `
       <ul class="top-nav">
-        <li>Settings</li>
-        <li>Credits</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').show()"" class="active">My Skins</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').show();$$('.myskins').hide()">Browse Skins</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide()">Skin Editor</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide()">Add Skin</li>
       </ul>
+      <div class="content">
+        <div class="browseonly" style="display:none;">
+          <skinsearch>
+            <input type="text" class="searchForSkin"/>
+            <button class="_b" onclick="searchForSkin($$('.searchForSkin').value)"><i class="fas fa-search"></i></button>
+          </skinsearch>
+          <skinbox class="bs"><ul></ul></skinbox>
+        </div>
+        <div class="myskins">
+          <skinbox>
+            <ul>
+              ${allSkins}
+            </ul>
+          </skinbox>
+        </div>
+      </div>
+    `
+  },
+  servers: async () => {
+    let aternosLoginData = null
+    const logInScreen = ``
+    try {
+      aternosLoginData = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/aternos.login.json`))
+    } catch {
+      return logInScreen
+    }
+  },
+  about: async () => {
+    return `
+      <div class="content">
+        <h1>About Green_Lab Client</h1>
+        <h3>Developed by Green_Lab</h3>
+
+        <h2>Thanks to...</h2>
+        <ul>
+          <li><a onclick="event.preventDefault();opn(this.href)" href="https://crafatar.com">Crafatar</a> for providing avatars</li>
+          <li><a onclick="event.preventDefault();opn(this.href)" href="https://www.electronjs.org">Electron</a> for the cool framework to create the app</li>
+          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/Pierce01/MinecraftLauncher-core#readme">minecraft-launcher-core</a> for the npm module, to make it's possible to run Minecraft</li>
+        </ul>
+      </div>
     `
   }
 }
+
+/* global waitFor */
+
+function searchForSkin (q) {
+  console.log('[SKINS] Searching for ' + q)
+  $$('skinbox.bs ul').innerHTML = `<h1>Searching for ${q} Skins</h1>`
+  waitFor(zGET({ url: `http://minecraft.novaskin.me/search?q=model:Player+${encodeURIComponent(q)}&json=true` }), (skinlist) => {
+    skinlist = JSON.parse(skinlist)
+    const skins = skinlist.skins
+    $$('skinbox.bs ul').innerHTML = ''
+    skins.forEach((skin, indexOfSkin) => {
+      $$('skinbox.bs ul').innerHTML += `
+        <li>
+          <skin skinurl="${skin.url}">
+            <h4>${skin.title}</h4>
+            <img style="cursor:pointer;" onclick="addSkin('${skin.title}','${skin.url}')" src="${skin.screenshot}" alt="${skin.title}" />
+          </skin>
+        </li>
+      `
+    })
+  })
+}
+
+window.searchForSkin = searchForSkin
+
+/* global $ */
+function reloadLauncher () {
+  $.page.refresh()
+}
+
+function addSkin (name, url) {
+  console.log(`[SKINS] Adding Skin ${name} from ${url}`)
+  const __file = `${uuidv4()}.png`
+  dlFile(url, `${getAppData()}/.Green_Lab-Client-MC/skins/${__file}`, () => {
+    const skinDex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
+    skinDex.push({
+      name,
+      file: __file
+    })
+    fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`, JSON.stringify(skinDex))
+    console.log(`[SKINS] Added Skin ${name} to My Skins`)
+    reloadLauncher()
+  }, () => {})
+}
+
+window.addSkin = addSkin
 
 loadPage(currentPage)
 
@@ -134,6 +284,19 @@ const pictures = [
   'endcity'
 ]
 
+const walk = async function * walk (dir) {
+  for await (const d of await fs.promises.opendir(dir)) {
+    const entry = path.join(dir, d.name)
+    yield entry
+  }
+}
+
+async function allWorlds (cb) {
+  for await (const p of walk(path.join(getAppData(), '.minecraft/saves'))) {
+    cb(p)
+  }
+}
+
 $$('body').style.backgroundImage = `url('${random.choose(pictures)}.png')`
 $$('body').style.backgroundSize = 'cover'
 
@@ -145,6 +308,7 @@ const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
 if (!fs.existsSync(directory)) fs.mkdirSync(directory)
 if (!fs.existsSync(`${directory}/lastVersion.optifine`)) fs.writeFileSync(`${directory}/lastVersion.optifine`, 'NOT_INSTALLED')
 if (!fs.existsSync(path.join(directory, 'skins'))) fs.mkdirSync(path.join(directory, 'skins'))
+if (!fs.existsSync(path.join(directory, 'skins/index.json'))) fs.writeFileSync(path.join(directory, 'skins/index.json'), '[]')
 getOptifineDownloadURL().then(optiFineURL => {
   if (fs.readFileSync(`${directory}/lastVersion.optifine`).toString('utf-8') !== optiFineURL.split('&')[0]) {
     console.log('Installing OptiFine')
@@ -181,6 +345,7 @@ function getSkin (cb) {
     })
   })
 }
+window.getSkin = getSkin
 
 function getAccount () {
   try {
@@ -199,44 +364,12 @@ function setAccount (name, email, pw) {
   pw = btoa(pw)
   fs.writeFileSync(directory + '/account.json', JSON.stringify({ name, pw, email }))
 }
-
-function getHead (cb) {
-  getSkin((url) => {
-    // waitfor(zGET({ url: url }), (img) => {
-    //   console.log(new Uint8Array(img))
-    // })
-
-    const req = new XMLHttpRequest()
-
-    req.responseType = 'arraybuffer'
-    req.addEventListener('load', (e) => {
-      const arrayBuffer = e.target.response
-
-      if (!arrayBuffer) {
-        throw new Error('No response')
-      }
-
-      // this the the byte array to decode
-      const byteArray = new Uint8Array(arrayBuffer)
-
-      const signature = [137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]
-
-      for (let i = 0; i < signature.length; i++) {
-        if (byteArray[i] !== signature[i]) {
-          return false
-        }
-      }
-    })
-
-    req.open('GET', url, true)
-    req.send()
-  })
-}
+window.setAccount = setAccount
 
 var sets = {
-  skin: function (cb) {
+  skin: function (callbackfunc) {
     getUUID(getAccount().name, (uuid) => {
-      cb(`https://crafatar.com/renders/head/${uuid}?overlay`)
+      callbackfunc(`https://crafatar.com/renders/head/${uuid}`)
     })
   },
   name: function (cb) {
