@@ -43,6 +43,11 @@ nav
     display: flex
     justify-content: space-around
     align-items: center
+    position: fixed
+    top: 5vh
+    color: #fff
+    left: $nav-width
+    width: 100vw - $nav-width
     li
       list-style: none
       margin: 0
@@ -59,10 +64,28 @@ main
   position: fixed
   right: 0
   bottom: 0
-  padding-left: 3vw
-  padding-right: 3vw
-  padding-top: 3vh
-  padding-bottom: 3vh
+  .content
+    padding-left: 3vw
+    padding-right: 3vw
+    padding-top: 3vh
+    padding-bottom: 3vh
+    width: 100%
+    height: 100%
+
+    &.flex
+      display: flex
+      justify-content: center
+      align-items: center
+
+    centeredplaybtn
+      color: #fff
+      border: 1px solid #236f0d
+      background: rgba(255,255,255,0.3)
+      font-size: 300%
+      padding: 3vw
+      &:hover
+        background: #236f0d
+        cursor: pointer
 
 account
   display: flex

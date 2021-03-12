@@ -7,6 +7,7 @@ const os = require('os-utils')
 const _os = require('os')
 const path = require('path')
 const win = require('./win.js')
+win.maximizeWindow()
 const { Client, Authenticator } = require('minecraft-launcher-core')
 
 // const { app, Menu } = require('electron')
@@ -56,7 +57,14 @@ function launchVanilla (dir = '', version = { number: getLatestVersion().release
 
   launcher.launch(opts)
   launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
-  launcher.on('data', (e) => console.log('[DATA]' + e))
+  launcher.on('data', (e) => {
+    if (e.includes('[Render thread/INFO]: Stopping!')) {
+      // Stopping
+      launchingVanilla = false
+      $$('centeredplaybtn').innerText = 'Play'
+    }
+    console.log('[DATA]' + e)
+  })
 
   return launcher
 }
@@ -89,11 +97,20 @@ function loadPage (id) {
   })
 }
 
+var runningVanilla = false
 
 const pages = {
   game: async () => {
     return `
-      <h1>Game</h1>
+      <ul class="top-nav">
+        <li>OptiFine</li>
+        <li>Vanilla</li>
+        <li>Fabric</li>
+        <li>Forge</li>
+      </ul>
+      <div class="content flex">
+        <centeredplaybtn onclick="if(runningVanilla==false){this.innerText='Running';runningVanilla=true;launchVanilla()}">Play</centeredplaybtn>
+      </div>
     `
   },
   settings: async () => {
