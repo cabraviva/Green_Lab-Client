@@ -23,7 +23,11 @@
   "dependencies": {
     "atob": "^2.1.2",
     "axios": "^0.21.1",
+    "custom-electron-titlebar": "^3.2.6",
     "discord-rpc": "^3.2.0",
+    "frameless-titlebar": "^2.1.4",
+    "minecraft-launcher-core": "^3.16.2",
+    "os-utils": "^0.0.14",
     "request": "^2.88.2"
   }
 }

@@ -3,6 +3,70 @@ const random = require('./random.js')
 const getOptifineDownloadURL = require('./optifine-url.js')
 const dlFile = require('./dlfile.js')
 const axios = require('axios')
+const os = require('os-utils')
+const _os = require('os')
+const path = require('path')
+const win = require('./win.js')
+const { Client, Authenticator } = require('minecraft-launcher-core')
+
+// const { app, Menu } = require('electron')
+// const isMac = process.platform === 'darwin'
+//
+// const template = [
+//   {
+//     label: 'File',
+//     submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+//   }
+// ]
+
+// const menu = Menu.buildFromTemplate(template)
+// Menu.setApplicationMenu(menu)
+
+function auth () {
+  const acc = getAccount()
+  return Authenticator.getAuth(acc.email, acc.pw)
+}
+
+function isWin () {
+  return _os.platform().toLowerCase().includes('win')
+}
+
+function getAppData () {
+  if (!isWin()) return _os.userInfo().homedir
+  return path.join(_os.userInfo().homedir, path.join('AppData', 'Roaming'))
+}
+
+function getLatestVersion () {
+  return JSON.parse(fs.readFileSync(path.join(getAppData(), path.join('.minecraft', 'versions/version_manifest_v2.json')))).latest
+}
+
+function launchVanilla (dir = '', version = { number: getLatestVersion().release, type: 'release' }) {
+  const launcher = new Client()
+
+  const opts = {
+    clientPackage: null,
+    authorization: auth(),
+    root: path.join(getAppData(), path.join('.minecraft', dir)),
+    version,
+    memory: {
+      min: `${mcRam().min}G`,
+      max: `${mcRam().max}G`
+    }
+  }
+
+  launcher.launch(opts)
+  launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
+  launcher.on('data', (e) => console.log('[DATA]' + e))
+
+  return launcher
+}
+
+function mcRam () {
+  return {
+    min: (Math.round(Math.round(os.totalmem()) / 1024) / 2) - (Math.round(Math.round(os.totalmem()) / 3 / 1024)),
+    max: (Math.round(Math.round(os.totalmem()) / 1024) / 2)
+  }
+}
 
 async function getAccessTokenForMC () {
   const account = getAccount()
@@ -31,6 +95,14 @@ const pages = {
     return `
       <h1>Game</h1>
     `
+  },
+  settings: async () => {
+    return `
+      <ul class="top-nav">
+        <li>Settings</li>
+        <li>Credits</li>
+      </ul>
+    `
   }
 }
 
@@ -46,21 +118,22 @@ const pictures = [
 ]
 
 $$('body').style.backgroundImage = `url('${random.choose(pictures)}.png')`
+$$('body').style.backgroundSize = 'cover'
 
 const fs = require('fs')
 const atob = require('atob')
 
-const directory = `${require('os').homedir()}\\AppData\\Roaming\\.Green_Lab-Client-MC`
+const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
 
 if (!fs.existsSync(directory)) fs.mkdirSync(directory)
-if (!fs.existsSync(`${directory}\\lastVersion.optifine`)) fs.writeFileSync(`${directory}\\lastVersion.optifine`, 'NOT_INSTALLED')
-
+if (!fs.existsSync(`${directory}/lastVersion.optifine`)) fs.writeFileSync(`${directory}/lastVersion.optifine`, 'NOT_INSTALLED')
+if (!fs.existsSync(path.join(directory, 'skins'))) fs.mkdirSync(path.join(directory, 'skins'))
 getOptifineDownloadURL().then(optiFineURL => {
-  if (fs.readFileSync(`${directory}\\lastVersion.optifine`).toString('utf-8') !== optiFineURL.split('&')[0]) {
+  if (fs.readFileSync(`${directory}/lastVersion.optifine`).toString('utf-8') !== optiFineURL.split('&')[0]) {
     console.log('Installing OptiFine')
-    dlFile(optiFineURL, `${directory}\\optifine.jar`, () => {
+    dlFile(optiFineURL, `${directory}/optifine.jar`, () => {
       console.log('Successfully installed OptiFine')
-      fs.writeFileSync(`${directory}\\lastVersion.optifine`, optiFineURL.split('&')[0])
+      fs.writeFileSync(`${directory}/lastVersion.optifine`, optiFineURL.split('&')[0])
     }, console.log)
   } else {
     console.log('OptiFine is already installed')
@@ -145,8 +218,8 @@ function getHead (cb) {
 
 var sets = {
   skin: function (cb) {
-    getSkin(v => {
-      cb(`background-image:url(${v})`)
+    getUUID(getAccount().name, (uuid) => {
+      cb(`https://crafatar.com/renders/head/${uuid}?overlay`)
     })
   },
   name: function (cb) {

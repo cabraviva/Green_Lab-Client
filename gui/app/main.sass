@@ -22,26 +22,65 @@ nav
   color: #fff
   width: $nav-width
   background-color: $nav-color
-  ul
+  ._nav,
     margin: 0
     padding: 0
     li
       list-style: none
-      background: rgba(11,11,11, 0.4)
+      // background: rgba(11,11,11, 0.4)
       margin: 0
-      padding: 1%
+      padding: 3%
       font-size: 300%
 
       &:hover
         cursor: pointer
         background: rgba(11,11,11, 0.7)
 
+.top-nav
+    margin: 0
+    padding: 0
+    background-color: $nav-color
+    display: flex
+    justify-content: space-around
+    align-items: center
+    li
+      list-style: none
+      margin: 0
+      padding: 1%
+      font-size: 120%
+
+      &:hover
+        cursor: pointer
+        background: rgba(11,11,11, 0.7)
+
 main
-  width: 100 - $nav-width
+  width: 100 - $nav-width - 6vw
+  height: 95vh - 6vh
+  position: fixed
+  right: 0
+  bottom: 0
+  padding-left: 3vw
+  padding-right: 3vw
+  padding-top: 3vh
+  padding-bottom: 3vh
 
 account
   display: flex
   justify-content: center
+
+  ul
+    width: $nav-width
+    margin: 0
+    padding: 0
+    li
+      margin: 0
+      padding: 0
+      &.flex
+        display: flex
+        justify-content: center
+      list-style: none
+      width: $nav-width
+
   name
     font-size: 500%
     text-align: center
@@ -49,3 +88,49 @@ account
 
   .skin
     background-size: cover
+
+#menu-bar
+  position: fixed
+  top: 0
+  left: 0
+  display: flex
+  justify-content: space-between
+  align-items: center
+  height: 5vh
+  width: 100vw
+  background: #34475a
+  color: #fff
+  -webkit-app-region: drag
+
+#menu-bar > div
+  height: 100%
+  display: flex
+  justify-content: space-between
+  align-items: center
+
+.menubar-btn
+  -webkit-app-region: no-drag
+
+button
+  height: 100%
+  padding: 0 15px
+  border: none
+  color: #fff
+  background: transparent
+  outline: none
+
+button:hover
+  background: rgba(221, 221, 221, 0.2)
+  cursor: pointer
+
+#close-btn:hover
+  background: rgb(255, 0, 0)
+
+button i
+  color: white
+
+.container
+  position: fixed
+  bottom: 0
+  left: 0
+  height: 95vh
