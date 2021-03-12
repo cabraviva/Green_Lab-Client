@@ -1,0 +1,29 @@
+{
+  "name": "green_lab-client",
+  "version": "1.0.0",
+  "description": "MC Green_Lab Client",
+  "main": "gui/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/greencoder001/Green_Lab-Client.git"
+  },
+  "author": "Green_Lab",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/greencoder001/Green_Lab-Client/issues"
+  },
+  "homepage": "https://github.com/greencoder001/Green_Lab-Client#readme",
+  "devDependencies": {
+    "electron": "^10.1.5"
+  },
+  "dependencies": {
+    "atob": "^2.1.2",
+    "axios": "^0.21.1",
+    "discord-rpc": "^3.2.0",
+    "request": "^2.88.2"
+  }
+}

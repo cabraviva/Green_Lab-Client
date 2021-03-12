@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/greencoder001/queryjs@latest/dist/query.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/greencoder001/zGET@latest/dist/bundle.js"></script>
+    <title>Home – Green_Lab Client</title>
+  </head>
+  <link rel="stylesheet" href="main.min.css">
+  <body style="background-size:cover;">
+
+    <nav>
+      <account>
+        <name set="name@innerHTML"></name>
+        <!-- <skin set="skin@style" class="skin"></skin> -->
+      </account>
+      <ul>
+        <li onclick="loadPage('game')">Game</li>
+        <li onclick="loadPage('worlds')">Worlds</li>
+        <li onclick="loadPage('servers')">Servers</li>
+        <li onclick="loadPage('mods')">Mods</li>
+        <li onclick="loadPage('packs')">Packs</li>
+      </ul>
+    </nav>
+
+    <main>
+
+    </main>
+
+  </body>
+  <script src="./renderer.js"></script>
+</html>

@@ -1,0 +1,45 @@
+@font-face {
+  font-family: "mc";
+  font-display: swap;
+  src: url(font.ttf);
+}
+
+div {
+  display: flex;
+  justify-content: center;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "mc";
+}
+
+h1 {
+  font-size: 15vh;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+}
+
+input,button {
+  font-size: 3vh;
+  background: #212020;
+  color: #fff;
+  border-radius: 40px;
+  padding: 1%;
+  outline: none;
+  border: 1px solid #303030;
+  margin-bottom: 0.5%;
+}
+
+button {
+  width: 20vw;
+}
+
+button:hover {
+  background: #0d7400;
+  cursor: pointer;
+}
