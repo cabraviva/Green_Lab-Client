@@ -8,6 +8,8 @@
     <script type="text/javascript" src="query.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/greencoder001/zGET@latest/dist/bundle.js"></script>
     <title>Green_Lab Client</title>
+    <script src="https://threejs.org/build/three.js"></script>
+    <script type="text/javascript" src="lib/skin-view.js"></script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css" integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
   </head>
   <link rel="stylesheet" href="main.min.css">
@@ -28,7 +30,10 @@
        <account>
          <ul>
            <li class="flex"><name set="name@innerHTML"></name></li>
-           <li class="flex"><img set="skin@src"></li>
+           <!-- <li class="flex"><img class="skinIMG" set="skin@src"></li> -->
+           <li class="flex">
+             <canvas id="skinView"></canvas>
+           </li>
          </ul>
        </account>
        <ul class="_nav">

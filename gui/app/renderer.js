@@ -1,4 +1,20 @@
-/* global waitfor, zGET, $$ */
+/* global waitfor, zGET, $$, fetch */
+
+window._log = console.log
+console.log = (...logs) => {
+  logs.forEach((item) => {
+    try {
+      if (item.includes('THREE.WebGLRenderer: Context Lost.')) window.lastSkinURL = null
+    } catch {}
+  })
+  window._log(...logs)
+}
+
+async function getLatest () {
+  const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
+  return launchermeta.versions.filter((version) => { return version.id === launchermeta.latest.release })[0]
+}
+window.getLatest = getLatest
 
 const mojang = require('mojang')
 const random = require('./random.js')
@@ -13,6 +29,10 @@ const opn = require('opn')
 const nbt = require('nbt')
 const { v4: uuidv4 } = require('uuid')
 
+const openFile = async function openFile () {
+  return (await (require('electron').remote.dialog).showOpenDialog()).filePaths[0]
+}
+
 function changeSkin (skinID) {
   console.log('[SKINS] Changing to skin ' + skinID)
   getUUID(getAccount().name, uuid => {
@@ -20,7 +40,26 @@ function changeSkin (skinID) {
       const stream = fs.createReadStream(`${getAppData()}/.Green_Lab-Client-MC/skins/${skinID}`)
       mojang.uploadSkin({ accessToken }, uuid, stream, false).then(() => {
         console.log('[SKINS] Changed to skin ' + skinID)
+        getSkin(skinURL => {
+          if (skinURL === window.lastSkinURL) return
+          window.lastSkinURL = skinURL
+          window.skin = new skinview3d.SkinViewer({
+            canvas: $$('#skinView'),
+            width: Math.floor(window.innerWidth / 7),
+            height: Math.floor(window.innerHeight / 5),
+            skin: skinURL
+          })
+
+          const control = skinview3d.createOrbitControls(window.skin)
+          control.enableRotate = false
+          control.enableZoom = false
+          control.enablePan = false
+
+          const walkAnimation = window.skin.animations.add(skinview3d.WalkingAnimation)
+          walkAnimation.speed = 1
+        })
       }).catch((err) => {
+        window.alert('Skin Error: The Skin ' + skinID + ' is not valid. Please chosse an other Skin')
         console.error(err)
       })
     })
@@ -50,11 +89,23 @@ function getAppData () {
   return path.join(_os.userInfo().homedir, path.join('AppData', 'Roaming'))
 }
 
-function getLatestVersion () {
-  return JSON.parse(fs.readFileSync(path.join(getAppData(), path.join('.minecraft', 'versions/version_manifest_v2.json')))).latest
+async function jsonFetch (url) {
+  return await (await fetch(url)).json()
 }
 
-function launchVanilla (dir = '', version = { number: getLatestVersion().release, type: 'release' }) {
+async function getLatestMCDownload () {
+  return (await jsonFetch((await getLatest()).url)).downloads.client.url
+}
+window.getLatestMCDownload = getLatestMCDownload
+
+async function getLatestVersion () {
+  const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
+  return launchermeta.latest.release
+  // return JSON.parse(fs.readFileSync(path.join(getAppData(), path.join('.minecraft', 'versions/version_manifest_v2.json')))).latest
+}
+
+async function launchVanilla (dir = '', version = { number: null, type: 'release' }) {
+  if (version.number === null) version.number = await getLatestVersion()
   const launcher = new Client()
 
   const opts = {
@@ -69,6 +120,7 @@ function launchVanilla (dir = '', version = { number: getLatestVersion().release
   }
 
   launcher.launch(opts)
+  win.minimizeWindow()
   launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
   launcher.on('data', (e) => {
     if (e.includes('[Render thread/INFO]: Stopping!') && (!e.includes('<'))) {
@@ -76,13 +128,16 @@ function launchVanilla (dir = '', version = { number: getLatestVersion().release
       runningVanilla = false
       $$('centeredplaybtn').innerText = 'Play'
     }
-    console.log('[DATA]' + e)
+    console.log('[DATA] ' + e)
   })
 
   return launcher
 }
 
-window.launchVanilla = launchVanilla
+async function launchOptiFine () {
+  return launchVanilla(undefined, { type: 'release', number: (await getLatestVersion()), custom: 'optifine' })
+}
+window.launchOptiFine = launchOptiFine
 
 function mcRam () {
   return {
@@ -168,10 +223,11 @@ const pages = {
     let allSkins = ''
     const skinIndex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
     skinIndex.forEach((skin, index) => {
+      if (skin === null) return
       allSkins += `
         <skin skinfile="${skin.file}">
-          <h4>${skin.name}</h4>
-          <img onclick="changeSkin('${skin.file}')" style="cursor:pointer; "src="file://${getAppData()}/.Green_Lab-Client-MC/skins/${skin.file}" alt="${skin.name}" />
+          <h4 style="text-align:center;"><span onclick="changeSkin('${skin.file}')" class="choose_this">${skin.name}</span> <i class="fas fa-pen choose_this" onclick="editSkin('${encodeURIComponent(skin.name)}','${encodeURIComponent(skin.file)}')" title="Edit ${skin.name}"></i></h4>
+          <canvas class="skin_view_chooser"></canvas>
         </skin>
       `
     })
@@ -181,7 +237,7 @@ const pages = {
         <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').show()"" class="active">My Skins</li>
         <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').show();$$('.myskins').hide()">Browse Skins</li>
         <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide()">Skin Editor</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide()">Add Skin</li>
+        <li onclick="chooseLocalSkin()">Add Skin</li>
       </ul>
       <div class="content">
         <div class="browseonly" style="display:none;">
@@ -218,7 +274,7 @@ const pages = {
 
         <h2>Thanks to...</h2>
         <ul>
-          <li><a onclick="event.preventDefault();opn(this.href)" href="https://crafatar.com">Crafatar</a> for providing avatars</li>
+          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/bs-community/skinview3d">SkinView3D</a> and <a onclick="event.preventDefault();opn(this.href)" href="https://threejs.org">Three.js</a> for the skin viewer</li>
           <li><a onclick="event.preventDefault();opn(this.href)" href="https://www.electronjs.org">Electron</a> for the cool framework to create the app</li>
           <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/Pierce01/MinecraftLauncher-core#readme">minecraft-launcher-core</a> for the npm module, to make it's possible to run Minecraft</li>
         </ul>
@@ -251,9 +307,69 @@ function searchForSkin (q) {
 
 window.searchForSkin = searchForSkin
 
+function changeSkinName (skinIndexID, newName) {
+  const skinDex = JSON.parse(fs.readFileSync(`${directory}/skins/index.json`).toString('utf-8'))
+  skinDex[skinIndexID].name = newName
+  fs.writeFileSync(`${directory}/skins/index.json`, JSON.stringify(skinDex))
+}
+
+function delSkin (skinIndexID) {
+  let skinDex = JSON.parse(fs.readFileSync(`${directory}/skins/index.json`).toString('utf-8'))
+  skinDex = skinDex.filter((_foo, i) => { return i !== skinIndexID })
+  fs.writeFileSync(`${directory}/skins/index.json`, JSON.stringify(skinDex))
+}
+
+window.changeSkinName = changeSkinName
+window.delSkin = delSkin
+
+function editSkin (name, file) {
+  name = decodeURIComponent(name)
+  file = decodeURIComponent(file)
+  console.log(`[SKINS] Editing ${name}`)
+  const popup = document.createElement('div')
+  popup.classList.add('popup')
+  let indexOfTheSkin = 0
+
+  const skinFilter = (elem, i) => {
+    if (elem.name === name && elem.file === file) indexOfTheSkin = i
+    return elem.name === name && elem.file === file
+  }
+
+  const skinDex = JSON.parse(fs.readFileSync(`${directory}/skins/index.json`).toString('utf-8'))
+  skinDex.filter(skinFilter)
+
+  popup.innerHTML = `
+    <i onclick="this.parentElement.outerHTML='';reloadLauncher()" class="fas fa-chevron-left choose_this" style="position:fixed;top:6vh;left:1vw;"></i>
+    <h1 style="text-align:center"><input type="text" value="${name}" oninput="changeSkinName(${indexOfTheSkin},this.value)" /></h1>
+    <i onclick="delSkin(${indexOfTheSkin});reloadLauncher()" class="fas fa-trash choose_this" style="position:fixed;top:6vh;right:1vw;color:#a80d0d;"></i>
+  `
+
+  $$('body').append(popup)
+}
+window.editSkin = editSkin
+
 /* global $ */
 function reloadLauncher () {
   $.page.refresh()
+}
+
+const prompt = require('electron-prompt')
+async function chooseLocalSkin () {
+  addLocalSkin((await prompt({ title: 'Add Skin', label: 'Enter a name for the skin:', value: 'Skin', type: 'input' })), await openFile())
+}
+
+function addLocalSkin (name, file) {
+  console.log(`[SKINS] Adding Skin ${name} from ${file}`)
+  const __file = `${uuidv4()}.png`
+  fs.copyFileSync(file, `${getAppData()}/.Green_Lab-Client-MC/skins/${__file}`)
+  const skinDex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
+  skinDex.push({
+    name,
+    file: __file
+  })
+  fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`, JSON.stringify(skinDex))
+  console.log(`[SKINS] Added Skin ${name} to My Skins`)
+  reloadLauncher()
 }
 
 function addSkin (name, url) {
@@ -297,6 +413,9 @@ async function allWorlds (cb) {
   }
 }
 
+window.isVanillaUpToDate = false
+window.isOptiFineUpToDate = false
+
 $$('body').style.backgroundImage = `url('${random.choose(pictures)}.png')`
 $$('body').style.backgroundSize = 'cover'
 
@@ -304,21 +423,69 @@ const fs = require('fs')
 const atob = require('atob')
 
 const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
-
 if (!fs.existsSync(directory)) fs.mkdirSync(directory)
-if (!fs.existsSync(`${directory}/lastVersion.optifine`)) fs.writeFileSync(`${directory}/lastVersion.optifine`, 'NOT_INSTALLED')
-if (!fs.existsSync(path.join(directory, 'skins'))) fs.mkdirSync(path.join(directory, 'skins'))
-if (!fs.existsSync(path.join(directory, 'skins/index.json'))) fs.writeFileSync(path.join(directory, 'skins/index.json'), '[]')
-getOptifineDownloadURL().then(optiFineURL => {
-  if (fs.readFileSync(`${directory}/lastVersion.optifine`).toString('utf-8') !== optiFineURL.split('&')[0]) {
-    console.log('Installing OptiFine')
-    dlFile(optiFineURL, `${directory}/optifine.jar`, () => {
-      console.log('Successfully installed OptiFine')
-      fs.writeFileSync(`${directory}/lastVersion.optifine`, optiFineURL.split('&')[0])
-    }, console.log)
-  } else {
-    console.log('OptiFine is already installed')
+const { spawn } = require('child_process')
+
+if (!fs.existsSync(`${directory}/latest.vanilla`)) fs.writeFileSync(`${directory}/latest.vanilla`, 'NOT_INSTALLED')
+
+async function installVanilla () {
+  const mcdl = await getLatestMCDownload()
+  let _isNewest = false
+  try {
+    _isNewest = fs.readFileSync(`${directory}/latest.vanilla`).toString('utf-8') === mcdl
+  } catch {
+    _isNewest = false
   }
+
+  if (_isNewest) { window.isVanillaUpToDate = true; return console.log('[VANILLA] Already installed') }
+
+  console.log('Downloading Vanilla')
+  dlFile(mcdl, `${directory}/green_lab-client.jar`, () => {
+    console.log('[VANILLA] Successfully installed')
+    fs.writeFileSync(`${directory}/latest.vanilla`, mcdl)
+    window.isVanillaUpToDate = true
+    return true
+  }, console.log)
+}
+
+installVanilla().then(_ => {
+  if (!fs.existsSync(`${directory}/lastVersion.optifine`)) fs.writeFileSync(`${directory}/lastVersion.optifine`, 'NOT_INSTALLED')
+  if (!fs.existsSync(path.join(directory, 'skins'))) fs.mkdirSync(path.join(directory, 'skins'))
+  if (!fs.existsSync(path.join(directory, 'skins/index.json'))) fs.writeFileSync(path.join(directory, 'skins/index.json'), '[]')
+  getOptifineDownloadURL().then(optiFineURL => {
+    if (fs.readFileSync(`${directory}/lastVersion.optifine`).toString('utf-8') !== optiFineURL.split('&')[0]) {
+      console.log('Installing OptiFine')
+      dlFile(optiFineURL, `${directory}/optifine.jar`, () => {
+        console.log('Successfully installed OptiFine')
+        fs.writeFileSync(`${directory}/lastVersion.optifine`, optiFineURL.split('&')[0])
+        // Run OptiFine Installer
+        window.alert('A new version of OptiFine is available and can be installed. Please press the Install Button in the new Window')
+        let java = 'java'
+        if (isWin()) java = 'C:\\Program Files (x86)\\Minecraft Launcher\\runtime\\jre-x64\\bin\\java.exe'
+        console.log(`[JAVA] Using Java command: ${java}`)
+        const OptiFineInstaller = spawn(java, ['-jar', `${directory}/optifine.jar`])
+        OptiFineInstaller.stdout.on('data', (data) => {
+          console.log(`[OPTIFINE] ${data}`)
+        })
+
+        OptiFineInstaller.stderr.on('data', (data) => {
+          console.error(`[OPTIFINE ERROR] ${data}`)
+        })
+
+        OptiFineInstaller.on('close', (code) => {
+          const b = optiFineURL.replace('https://optifine.net/downloadx?f=', '').replace('.jar', '').split('_')
+          const optiDir = `${b[1]}_${b[0]}_${b[2]}_${b[3]}_${b[4]}`.split('&')[0]
+          console.log(`[OPTIFINE] Installation finished: ${code}`)
+          console.log(optiDir)
+          fs.cop//copy folder
+          window.isOptiFineUpToDate = true
+        })
+      }, console.log)
+    } else {
+      window.isOptiFineUpToDate = true
+      console.log('OptiFine is already installed')
+    }
+  })
 })
 
 function btoa (str) {
@@ -368,9 +535,10 @@ window.setAccount = setAccount
 
 var sets = {
   skin: function (callbackfunc) {
-    getUUID(getAccount().name, (uuid) => {
-      callbackfunc(`https://crafatar.com/renders/head/${uuid}`)
-    })
+    callbackfunc(`https://minecraftskinstealer.com/api/v1/skin/download/cube/${encodeURIComponent(getAccount().name)}`)
+    // getUUID(getAccount().name, (uuid) => {
+    //   callbackfunc(`https://crafatar.com/renders/head/${uuid}`)
+    // })
   },
   name: function (cb) {
     if (!getAccount()) {
@@ -410,7 +578,42 @@ var sets = {
   }
 }
 
+function createSkinViewFor (canvas) {
+  canvas.classList.remove('skin_view_chooser')
+  const skinViewer = new skinview3d.SkinViewer({
+    canvas,
+    width: 300,
+    height: 400,
+    skin: `${getAppData()}/.Green_Lab-Client-MC/skins/${canvas.parentElement.getAttribute('skinfile')}`
+  })
+
+  const control = skinview3d.createOrbitControls(skinViewer)
+  control.enableRotate = true
+  control.enableZoom = false
+  control.enablePan = false
+
+  const runAnimation = skinViewer.animations.add(skinview3d.RunningAnimation)
+  runAnimation.speed = 0.75
+}
+
+function viewMYSKINS () {
+  try {
+    $$('.skin_view_chooser')
+  } catch { return false }
+
+  if (!$.exist($$('.skin_view_chooser')[0])) {
+    // Only one Skin
+    createSkinViewFor($$('.skin_view_chooser'))
+  } else {
+    // Multiple Skins
+    $$('.skin_view_chooser').forEach(elem => {
+      createSkinViewFor(elem)
+    })
+  }
+}
+
 const a = () => {
+  viewMYSKINS()
   for (const b of document.querySelectorAll('[set]')) {
     const attr = b.getAttribute('set').split('@')[0]
     const into = b.getAttribute('set').split('@')[1]
@@ -424,3 +627,56 @@ const a = () => {
 }
 
 window.requestAnimationFrame(a)
+
+
+// Skin View
+/* global skinview3d */
+window.lastSkinURL = null
+window.skin = null
+function skinViewHandler () {
+  getSkin(skinURL => {
+    if (skinURL === window.lastSkinURL) return
+    window.lastSkinURL = skinURL
+    window.skin = new skinview3d.SkinViewer({
+      canvas: $$('#skinView'),
+      width: Math.floor(window.innerWidth / 7),
+      height: Math.floor(window.innerHeight / 5),
+      skin: skinURL
+    })
+
+    const control = skinview3d.createOrbitControls(window.skin)
+    control.enableRotate = false
+    control.enableZoom = false
+    control.enablePan = false
+
+    const walkAnimation = window.skin.animations.add(skinview3d.WalkingAnimation)
+    walkAnimation.speed = 1
+  })
+}
+
+function setSkinViewerSize () {
+  if (!window.skin) return
+  window.skin.width = Math.floor(window.innerWidth / 7)
+  window.skin.height = Math.floor(window.innerHeight / 5)
+}
+
+setInterval(skinViewHandler, 10 * 1000)
+setInterval(setSkinViewerSize, 200)
+skinViewHandler()
+
+const up2IH = () => {
+  if (window.isOptiFineUpToDate && window.isVanillaUpToDate) {
+    clearInterval(window.up2DateInterval)
+    $$('.up2DateWaitingScreen').outerHTML = ''
+  } else {
+    try {
+      $$('.up2DateWaitingScreen')
+    } catch {
+      $$('body').innerHTML += `
+        <div class="popup up2DateWaitingScreen"><h1 style="text-align:center;">Installing Minecraft</h1></div>
+      `
+    }
+  }
+}
+window.up2DateInterval = setInterval(up2IH, 500)
+up2IH()
