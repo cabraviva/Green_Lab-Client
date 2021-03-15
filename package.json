@@ -39,6 +39,7 @@
     "electron-squirrel-startup": "^1.0.0",
     "form-data": "^2.3.3",
     "frameless-titlebar": "^2.1.4",
+    "fs-extra": "^8.1.0",
     "minecraft-launcher-core": "^3.16.2",
     "minecraft-skin": "^0.1.2",
     "mojang": "^2.2.2",

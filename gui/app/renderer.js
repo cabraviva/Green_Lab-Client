@@ -448,6 +448,8 @@ async function installVanilla () {
   }, console.log)
 }
 
+const fse = require('fs-extra')
+
 installVanilla().then(_ => {
   if (!fs.existsSync(`${directory}/lastVersion.optifine`)) fs.writeFileSync(`${directory}/lastVersion.optifine`, 'NOT_INSTALLED')
   if (!fs.existsSync(path.join(directory, 'skins'))) fs.mkdirSync(path.join(directory, 'skins'))
@@ -477,7 +479,7 @@ installVanilla().then(_ => {
           const optiDir = `${b[1]}_${b[0]}_${b[2]}_${b[3]}_${b[4]}`.split('&')[0]
           console.log(`[OPTIFINE] Installation finished: ${code}`)
           console.log(optiDir)
-          fs.cop//copy folder
+          fse.copySync(`${getAppData()}/.minecraft/versions/${optiDir}`, `${getAppData()}/.minecraft/versions/of`, console.error)
           window.isOptiFineUpToDate = true
         })
       }, console.log)
