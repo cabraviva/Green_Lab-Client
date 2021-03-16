@@ -62,9 +62,13 @@ function changeSkin (skinID) {
         window.alert('Skin Error: The Skin ' + skinID + ' is not valid. Please chosse an other Skin')
         console.error(err)
       })
+    }).catch(() => {
+      fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN')
+      reloadLauncher()
     })
   })
 }
+window.changeSkin = changeSkin
 
 window.opn = opn
 window.nbt = nbt
@@ -92,6 +96,11 @@ function getAppData () {
 async function jsonFetch (url) {
   return await (await fetch(url)).json()
 }
+
+async function getLatestMCJSON () {
+  return (JSON.stringify((await jsonFetch((await getLatest()).url))))
+}
+window.getLatestMCJSON = getLatestMCJSON
 
 async function getLatestMCDownload () {
   return (await jsonFetch((await getLatest()).url)).downloads.client.url
@@ -126,16 +135,42 @@ async function launchVanilla (dir = '', version = { number: null, type: 'release
     if (e.includes('[Render thread/INFO]: Stopping!') && (!e.includes('<'))) {
       // Stopping
       runningVanilla = false
-      $$('centeredplaybtn').innerText = 'Play'
+      $$('centeredplaybtn').any('innerText', 'Play')
     }
     console.log('[DATA] ' + e)
   })
 
   return launcher
 }
+window.launchVanilla = launchVanilla
 
-async function launchOptiFine () {
-  return launchVanilla(undefined, { type: 'release', number: (await getLatestVersion()), custom: 'optifine' })
+async function launchOptiFine (dir = '') {
+  const launcher = new Client()
+
+  const opts = {
+    clientPackage: null,
+    authorization: auth(),
+    root: path.join(getAppData(), path.join('.minecraft', dir)),
+    version: { type: 'release', number: (fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/latest.optifine.mc.num`).toString('utf-8')), custom: 'of' },
+    memory: {
+      min: `${mcRam().min}G`,
+      max: `${mcRam().max}G`
+    }
+  }
+
+  launcher.launch(opts)
+  win.minimizeWindow()
+  launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
+  launcher.on('data', (e) => {
+    if ((e.includes('[Render thread/INFO]: Stopping!') || e.includes('[main/INFO]: Stopping!')) && (!e.includes('<'))) {
+      // Stopping
+      runningVanilla = false
+      $$('centeredplaybtn').any('innerText', 'Play')
+    }
+    console.log('[DATA] ' + e)
+  })
+  // const launcher = launchVanilla(undefined, { type: 'release', number: (fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/latest.optifine.mc.num`).toString('utf-8')), custom: 'of' })
+  return launcher
 }
 window.launchOptiFine = launchOptiFine
 
@@ -172,13 +207,20 @@ const pages = {
   game: async () => {
     return `
       <ul class="top-nav">
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')">OptiFine</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')" class="active">Vanilla</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')">Fabric</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active')">Forge</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').hide();$$('.optifine').show()" class="active">OptiFine</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').show();$$('.optifine').hide()">Vanilla</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').hide();$$('.optifine').hide()">Fabric</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').hide();$$('.optifine').hide()">Forge</li>
       </ul>
-      <div class="content flex vanilla" style="overflow:hidden;padding:0;margin:0">
-        <centeredplaybtn onclick="if(runningVanilla==false){this.innerText='Running';runningVanilla=true;launchVanilla()}">Play</centeredplaybtn>
+      <div class="content optifine" style="overflow:hidden;padding:0;margin:0">
+        <div class="flexer">
+          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', 'Runnning');runningVanilla=true;launchOptiFine()}">Play</centeredplaybtn>
+        </div>
+      </div>
+      <div class="content vanilla" style="overflow:hidden;padding:0;margin:0;display:none;">
+        <div class="flexer">
+          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', 'Runnning');runningVanilla=true;launchVanilla()}">Play</centeredplaybtn>
+        </div>
       </div>
     `
   },
@@ -192,21 +234,32 @@ const pages = {
         worlds = worlds.filter((elem) => { return !elem.endsWith('.zip') })
         let i = 0
         for (const world of worlds) {
-          let leveldat = null
-          nbt.parse(fs.readFileSync(path.join(world, 'level.dat')), (err, data) => {
-            if (err) return reject(window.alert('An error occurs! INVALID_LEVELDAT_NBT. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world))
-            leveldat = data
+          try {
+            let leveldat = null
+            nbt.parse(fs.readFileSync(path.join(world, 'level.dat')), (err, data) => {
+              if (err) return reject(window.alert('An error occurs! INVALID_LEVELDAT_NBT. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world + '\nYou can also try to delete the folder with the world.'))
+              leveldat = data
 
-            console.warn(world)
+              final += `
+                <div class="world">
+                  <h2>${leveldat.value.Data.value.LevelName.value}</h2>
+                  <span class="version">${(leveldat?.value?.Data?.value?.Version?.value?.Name?.value) || 'Unknown Version'}</span>
+                </div>
+              `
+              i += 1
 
-            final += `
-              <div class="world">
-                <h2>${leveldat.value.Data.value.LevelName.value}</h2>
-                <span class="version">${(leveldat?.value?.Data?.value?.Version?.value?.Name?.value) || 'Unknown Version'}</span>
-              </div>
-            `
+              if (i >= worlds.length) {
+                resolve(`
+                  <div class="content">
+                    ${final}
+                  </div>
+                `)
+              }
+            })
+          } catch (err) {
+            console.warn('Error: Reading World ' + world + ' failed')
+            // window.alert('An error occurs! INVALID_WORLD. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world + ' [See Console] \nYou can also try to delete the folder with the world.')
             i += 1
-
             if (i >= worlds.length) {
               resolve(`
                 <div class="content">
@@ -214,7 +267,7 @@ const pages = {
                 </div>
               `)
             }
-          })
+          }
         }
       })
     })
@@ -258,13 +311,7 @@ const pages = {
     `
   },
   servers: async () => {
-    let aternosLoginData = null
-    const logInScreen = ``
-    try {
-      aternosLoginData = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/aternos.login.json`))
-    } catch {
-      return logInScreen
-    }
+    // Servers
   },
   about: async () => {
     return `
@@ -353,10 +400,17 @@ function reloadLauncher () {
   $.page.refresh()
 }
 
+window.addEventListener('keydown', (e) => {
+  if (((e.ctrlKey && e.key === 'r') || e.key === 'F5') && runningVanilla) {
+    e.preventDefault()
+  }
+})
+
 const prompt = require('electron-prompt')
 async function chooseLocalSkin () {
   addLocalSkin((await prompt({ title: 'Add Skin', label: 'Enter a name for the skin:', value: 'Skin', type: 'input' })), await openFile())
 }
+window.chooseLocalSkin = chooseLocalSkin
 
 function addLocalSkin (name, file) {
   console.log(`[SKINS] Adding Skin ${name} from ${file}`)
@@ -416,7 +470,7 @@ async function allWorlds (cb) {
 window.isVanillaUpToDate = false
 window.isOptiFineUpToDate = false
 
-$$('body').style.backgroundImage = `url('${random.choose(pictures)}.png')`
+$$('body').style.background = `url('${random.choose(pictures)}.png') no-repeat center center fixed`
 $$('body').style.backgroundSize = 'cover'
 
 const fs = require('fs')
@@ -441,14 +495,16 @@ async function installVanilla () {
 
   console.log('Downloading Vanilla')
   dlFile(mcdl, `${directory}/green_lab-client.jar`, () => {
+    getLatest().then(({ id }) => {
+      fs.writeFileSync(`${directory}/latest.vanilla.num`, id)
+    })
+    fs.writeFileSync(`${directory}/green_lab-client.json`, getLatestMCJSON())
     console.log('[VANILLA] Successfully installed')
     fs.writeFileSync(`${directory}/latest.vanilla`, mcdl)
     window.isVanillaUpToDate = true
     return true
   }, console.log)
 }
-
-const fse = require('fs-extra')
 
 installVanilla().then(_ => {
   if (!fs.existsSync(`${directory}/lastVersion.optifine`)) fs.writeFileSync(`${directory}/lastVersion.optifine`, 'NOT_INSTALLED')
@@ -476,10 +532,17 @@ installVanilla().then(_ => {
 
         OptiFineInstaller.on('close', (code) => {
           const b = optiFineURL.replace('https://optifine.net/downloadx?f=', '').replace('.jar', '').split('_')
-          const optiDir = `${b[1]}_${b[0]}_${b[2]}_${b[3]}_${b[4]}`.split('&')[0]
+          const optiDir = `${b[1]}-${b[0]}_${b[2]}_${b[3]}_${b[4]}`.split('&')[0]
           console.log(`[OPTIFINE] Installation finished: ${code}`)
           console.log(optiDir)
-          fse.copySync(`${getAppData()}/.minecraft/versions/${optiDir}`, `${getAppData()}/.minecraft/versions/of`, console.error)
+          fs.writeFileSync(`${directory}/latest.optifine.mc.num`, b[1])
+          // Launch Optifine: launchVanilla(undefined, { type: 'release', number: '${v}', custom: 'of' })
+
+          if (fs.existsSync(`${getAppData()}/.minecraft/versions/of`)) fs.rmdirSync(`${getAppData()}/.minecraft/versions/of`, { recursive: true })
+
+          fs.renameSync(`${getAppData()}/.minecraft/versions/${optiDir}`, `${getAppData()}/.minecraft/versions/of`, console.error)
+          fs.renameSync(`${getAppData()}/.minecraft/versions/of/${optiDir}.jar`, `${getAppData()}/.minecraft/versions/of/of.jar`)
+          fs.renameSync(`${getAppData()}/.minecraft/versions/of/${optiDir}.json`, `${getAppData()}/.minecraft/versions/of/of.json`)
           window.isOptiFineUpToDate = true
         })
       }, console.log)
@@ -537,10 +600,7 @@ window.setAccount = setAccount
 
 var sets = {
   skin: function (callbackfunc) {
-    callbackfunc(`https://minecraftskinstealer.com/api/v1/skin/download/cube/${encodeURIComponent(getAccount().name)}`)
-    // getUUID(getAccount().name, (uuid) => {
-    //   callbackfunc(`https://crafatar.com/renders/head/${uuid}`)
-    // })
+    callbackfunc('NOT_SUPPORTED')
   },
   name: function (cb) {
     if (!getAccount()) {
@@ -571,6 +631,8 @@ var sets = {
         </body>
       `
       return null
+    } else {
+      getAccessTokenForMC().catch(() => { fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() })
     }
 
     // return getAccount().name
@@ -630,7 +692,6 @@ const a = () => {
 
 window.requestAnimationFrame(a)
 
-
 // Skin View
 /* global skinview3d */
 window.lastSkinURL = null
@@ -662,7 +723,7 @@ function setSkinViewerSize () {
   window.skin.height = Math.floor(window.innerHeight / 5)
 }
 
-setInterval(skinViewHandler, 10 * 1000)
+setInterval(skinViewHandler, 30 * 1000)
 setInterval(setSkinViewerSize, 200)
 skinViewHandler()
 

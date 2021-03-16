@@ -22,7 +22,7 @@
      <div class="right">
        <button class="menubar-btn" id="minimize-btn" onclick="win.minimizeWindow()"><i class="fas fa-window-minimize"></i></button>
        <button class="menubar-btn" id="max-unmax-btn" onclick="win.maxUnmaxWindow()"><i class="far fa-square"></i></button>
-       <button class="menubar-btn" id="close-btn" onclick="win.closeWindow()"><i class="fas fa-times"></i></button>
+       <button class="menubar-btn" id="close-btn" onclick="if(runningVanilla===true){alert('You need to close Minecraft first!')}else{win.closeWindow()}"><i class="fas fa-times"></i></button>
      </div>
    </div>
    <div class="container">

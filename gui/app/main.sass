@@ -78,7 +78,7 @@ nav
   background: #ffffff
 
 ::-webkit-scrollbar-thumb:active
-  background: #000000
+  background: #ddd
 
 ::-webkit-scrollbar-track
   background: #666666
@@ -94,6 +94,11 @@ nav
 ::-webkit-scrollbar-corner
   background: transparent
 
+body
+  -webkit-background-size: cover
+  -moz-background-size: cover
+  -o-background-size: cover
+  background-size: cover
 
 main
   width: 100 - $nav-width - 6vw
@@ -109,7 +114,7 @@ main
     padding-top: 3vh
     padding-bottom: 3vh
     width: 86%
-    height: 100%
+    height: 90vh
     color: #fff
     font-size: 200%
 
@@ -253,3 +258,10 @@ button i
   color: white
   bottom: 0
   left: 0
+
+.flexer
+  width: 100%
+  height: 100%
+  display: flex
+  justify-content: center
+  align-items: center
