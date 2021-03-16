@@ -1,4 +1,40 @@
 /* global waitfor, zGET, $$, fetch */
+const mergeImages = require('merge-images')
+
+const listCosmetics = async () => {
+  const cosmetics = await jsonFetch('https://greenlabclient.greencoder001.repl.co/skin-editor/cosmetics/list/')
+  return cosmetics
+}
+
+async function getCosmeticByID (id) {
+  return await jsonFetch(`https://greenlabclient.greencoder001.repl.co/skin-editor/cosmetics/view/${id}`)
+}
+
+window.listCosmetics = listCosmetics
+window.getCosmeticByID = getCosmeticByID
+
+const sortCosmeticTexturesByPriority = (rawTextures) => {
+  const textures = rawTextures.sort((last, current) => {
+    if (last.priority > current.priority) return 1
+    if (last.priority < current.priority) return -1
+    return 0
+  })
+  return textures
+}
+
+const onlyImageURLOfCosmeticTextures = (arrayOfCompiledTextures) => {
+  const final = []
+  for (const texture of arrayOfCompiledTextures) {
+    final.push(texture.img)
+  }
+  return final
+}
+
+const mergeCosmeticTexturesToSkin = async (textures) => {
+  const compiledTextures = onlyImageURLOfCosmeticTextures(sortCosmeticTexturesByPriority(textures))
+  return await mergeImages(compiledTextures, { width: 64, height: 64 })
+}
+window.mergeCosmeticTexturesToSkin = mergeCosmeticTexturesToSkin
 
 window._log = console.log
 console.log = (...logs) => {
@@ -285,14 +321,87 @@ const pages = {
       `
     })
 
+    const cosmeticList = await listCosmetics()
+
+    const skineditornaventries = {
+      hair: '',
+      skins: '',
+      eyes: '',
+      faces: '',
+      clothes: '',
+      arms: '',
+      legs: '',
+      accessoires: ''
+    }
+
+    for (const _cosmetic of cosmeticList.hairs) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.hair += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    for (const _cosmetic of cosmeticList.skins) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.skins += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    for (const _cosmetic of cosmeticList.eyes) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.eyes += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    for (const _cosmetic of cosmeticList.faces) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.faces += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    const skineditornav = `
+      <skincategory>
+        <h3>Hair</h3>
+        <skincategoryentries>
+          <!--<cosmeticentry>
+            <img src="" alt="" />
+          </cosmeticentry>-->
+          ${skineditornaventries.hair}
+        </skincategoryentries>
+      </skincategory>
+    `
+
     return `
       <ul class="top-nav">
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').show()"" class="active">My Skins</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').show();$$('.myskins').hide()">Browse Skins</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide()">Skin Editor</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').show();$$('.skin-editor-container').hide()"" class="active">My Skins</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').show();$$('.myskins').hide();$$('.skin-editor-container').hide()">Browse Skins</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide();$$('.skin-editor-container').show()">Skin Editor</li>
         <li onclick="chooseLocalSkin()">Add Skin</li>
       </ul>
       <div class="content">
+        <div class="skin-editor-container" style="display:none;overflow:hidden;">
+          <skineditornav>
+            ${skineditornav}
+          </skineditornav>
+          <skineditorpreview>
+
+          </skineditorpreview>
+        </div>
         <div class="browseonly" style="display:none;">
           <skinsearch>
             <input type="text" class="searchForSkin"/>
