@@ -121,7 +121,7 @@ function auth () {
 }
 
 function isWin () {
-  return _os.platform().toLowerCase().includes('win')
+  return _os.platform().toLowerCase().includes('win32')
 }
 
 function getAppData () {
@@ -172,6 +172,7 @@ async function launchVanilla (dir = '', version = { number: null, type: 'release
       // Stopping
       runningVanilla = false
       $$('centeredplaybtn').any('innerText', 'Play')
+      win.getCurrentWindow().focus()
     }
     console.log('[DATA] ' + e)
   })
@@ -367,6 +368,46 @@ const pages = {
     for (const _cosmetic of cosmeticList.faces) {
       const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
       skineditornaventries.faces += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    for (const _cosmetic of cosmeticList.clothes) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.clothes += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    for (const _cosmetic of cosmeticList.arms) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.arms += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    for (const _cosmetic of cosmeticList.legs) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.legs += `
+        <cosmeticentry cosmeticid="${_cosmetic.id}">
+          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
+          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
+        </cosmeticentry>
+      `
+    }
+
+    for (const _cosmetic of cosmeticList.accessoires) {
+      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
+      skineditornaventries.accessoires += `
         <cosmeticentry cosmeticid="${_cosmetic.id}">
           <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
           <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
@@ -852,3 +893,7 @@ const up2IH = () => {
 }
 window.up2DateInterval = setInterval(up2IH, 500)
 up2IH()
+
+;(async () => {
+  process.versions.minecraft = await getLatestVersion()
+})()
