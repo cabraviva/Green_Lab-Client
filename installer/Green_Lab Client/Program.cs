@@ -7,12 +7,12 @@ namespace Green_Lab_Client
     {
         static void Main(string[] args)
         {
-            Boolean _DEBUG = true;
+            Boolean _DEBUG = false;
 
             Console.WriteLine("Launching Green_Lab Client");
 
             ProcessStartInfo start = new ProcessStartInfo();
-            start.Arguments = "greencoder001/Green_Lab-Client-MC _green_lab-client-mc --logging win";
+            start.Arguments = "greencoder001/Green_Lab-Client _green_lab-client-mc --logging win";
             start.FileName = "gli.exe";
             if (_DEBUG)
             {
