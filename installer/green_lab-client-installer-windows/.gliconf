@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "install": {
+      "commands": [
+        ["move", {
+          "src": "%package/src",
+          "as": "folder",
+          "to": "%program/executable"
+        }],
+        ["execute", "run"]
+      ]
+    },
+    "run": {
+      "commands": [
+        ["run", "\"%program/executable/Green_Lab Client.exe\""]
+      ]
+    }
+  }
+}
