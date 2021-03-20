@@ -284,3 +284,33 @@ skineditornav, skineditorpreview
   height: 90%
   position: fixed
   top: 10%
+
+.friendRequestPopup
+  h1
+    text-align: center
+    font-size: 300%
+  skinContainer
+    display: flex
+    justify-content: center
+  buttoncontainer
+    display: flex
+    justify-content: space-around
+
+    button
+      color: #fff
+      padding: 2%
+      font-size: 200%
+      &.accept
+        background: #1e8f1c
+        &:hover
+          background: #1edb1a
+      &.block
+        background: #9e0a1f
+        &:hover
+          background: #f70f30
+      &.ignore
+        background: #bba50f
+        &:hover
+          background: #ecd00e
+      &:hover
+        cursor: pointer

@@ -1,5 +1,37 @@
-/* global waitfor, zGET, $$, fetch */
+/* global waitfor, zGET, $$, fetch, io, socket */
 const mergeImages = require('merge-images')
+window.socket = null
+
+/* global Notification */
+
+class RawPushNotification {
+  constructor (appName, title, body, icon, onClick, autoFocus = true) {
+    this.appName = appName
+    this.title = title
+    this.body = body
+    this.icon = icon
+    this.onClick = onClick
+  }
+
+  send () {
+    const notification = new Notification(this.title, {
+      body: this.body,
+      icon: this.icon
+    })
+
+    notification.addEventListener('click', this.onClick)
+    notification.addEventListener('click', () => {
+      win.getCurrentWindow().focus()
+    })
+    return notification
+  }
+}
+
+class PushNotification extends RawPushNotification {
+  constructor (title, { body = '', onClick = function () {} }) {
+    super('Green_Lab Client', title, body, require('path').join(__dirname, 'icon.png'), onClick)
+  }
+}
 
 const listCosmetics = async () => {
   const cosmetics = await jsonFetch('https://greenlabclient.greencoder001.repl.co/skin-editor/cosmetics/list/')
@@ -628,6 +660,58 @@ const atob = require('atob')
 
 const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
 if (!fs.existsSync(directory)) fs.mkdirSync(directory)
+
+// Start GLC-Online
+if (!fs.existsSync(path.join(directory, 'glc-online'))) fs.mkdirSync(path.join(directory, 'glc-online'))
+if (!fs.existsSync(path.join(directory, 'glc-online', '.enabled'))) fs.writeFileSync(path.join(directory, 'glc-online', '.enabled'), 'true')
+if (!fs.existsSync(path.join(directory, 'glc-online', 'friends.json'))) fs.writeFileSync(path.join(directory, 'glc-online', 'friends.json'), '[]')
+if (!fs.existsSync(path.join(directory, 'glc-online', 'blocked.json'))) fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), '[]')
+if (!fs.existsSync(path.join(directory, 'glc-online', 'fr.enabled'))) fs.writeFileSync(path.join(directory, 'glc-online', 'fr.enabled'), 'true')
+
+function disableGLC () {
+  fs.writeFileSync((path.join(directory, 'glc-online', '.enabled')), 'false')
+}
+
+function enableGLC () {
+  fs.writeFileSync((path.join(directory, 'glc-online', '.enabled')), 'true')
+}
+
+function disableFR () {
+  fs.writeFileSync((path.join(directory, 'glc-online', 'fr.enabled')), 'false')
+}
+
+function enableFR () {
+  fs.writeFileSync((path.join(directory, 'glc-online', 'fr.enabled')), 'true')
+}
+
+function addFriend (ign) {
+  const friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8'))
+  friends.push(ign)
+  fs.writeFileSync(path.join(directory, 'glc-online', 'friends.json'), JSON.stringify(friends))
+}
+
+function removeFriend (ign) {
+  let friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8'))
+  friends = friends.filter(friend => friend !== ign)
+  fs.writeFileSync(path.join(directory, 'glc-online', 'friends.json'), JSON.stringify(friends))
+}
+
+function blockFriend (ign) {
+  removeFriend(ign)
+  const blocked = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'blocked.json')).toString('utf-8'))
+  blocked.push(ign)
+  fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), JSON.stringify(blocked))
+}
+
+window.addFriend = addFriend
+window.blockFriend = blockFriend
+window.enableGLC = enableGLC
+window.disableGLC = disableGLC
+window.enableFR = enableFR
+window.disableFR = disableFR
+
+// End GLC-Online
+
 const { spawn } = require('child_process')
 
 if (!fs.existsSync(`${directory}/latest.vanilla`)) fs.writeFileSync(`${directory}/latest.vanilla`, 'NOT_INSTALLED')
@@ -782,7 +866,86 @@ var sets = {
       `
       return null
     } else {
-      getAccessTokenForMC().catch(() => { fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() })
+      getAccessTokenForMC().then(async ({ accessToken }) => {
+        if (fs.readFileSync(path.join(directory, 'glc-online', '.enabled')).toString('utf-8') === 'true') {
+          window.socket = io('https://GreenLabClientParty.greencoder001.repl.co', {
+            secure: true,
+            auth: ({ accessToken, mail: getAccount().email, ign: getAccount().name })
+          })
+
+          socket.on('log', (logmsg) => {
+            console.log('[GLC-ONLINE] ' + logmsg)
+          })
+
+          socket.on('receiveFriendRequest', (friendRequest) => {
+            let isBlockedFriend = false
+            if (fs.readFileSync(path.join(directory, 'glc-online', 'fr.enabled')).toString('utf-8') !== 'true') isBlockedFriend = true
+            JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'blocked.json')).toString('utf-8')).forEach(blockedFriend => {
+              if (blockedFriend === friendRequest.from) isBlockedFriend = true
+            })
+
+            JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8')).forEach(blockedFriend => {
+              if (blockedFriend === friendRequest.from) isBlockedFriend = true
+            })
+
+            if (isBlockedFriend) return
+            console.log(`Received friend request from ${friendRequest.from}`)
+            const notification = new PushNotification('New Friend Request', {
+              body: `${friendRequest.from} wants to be your friend!`,
+              onClick: async () => {
+                function _createSkinViewFor (canvas) {
+                  canvas.classList.remove('skin_view_chooser')
+                  const skinViewer = new skinview3d.SkinViewer({
+                    canvas,
+                    width: 300,
+                    height: 400,
+                    skin: `${canvas.getAttribute('skinfile')}`
+                  })
+
+                  const control = skinview3d.createOrbitControls(skinViewer)
+                  control.enableRotate = true
+                  control.enableZoom = false
+                  control.enablePan = false
+
+                  const runAnimation = skinViewer.animations.add(skinview3d.RunningAnimation)
+                  runAnimation.speed = 0.75
+                }
+
+                // Friend Request Popup
+                const popup = document.createElement('div')
+                popup.classList.add('popup')
+                popup.classList.add('friendRequestPopup')
+
+                const uuid = JSON.parse(await (await fetch(`https://api.mojang.com/users/profiles/minecraft/${friendRequest.from}`)).text()).id
+                let skinfile = (await jsonFetch(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`))
+                skinfile = JSON.parse(atob(skinfile.properties[0].value)).textures.SKIN.url
+
+                const friendSkinView = document.createElement('canvas')
+                friendSkinView.setAttribute('skinfile', skinfile)
+
+                popup.innerHTML = `
+                  <i onclick="this.parentElement.outerHTML=''" class="fas fa-chevron-left choose_this" style="position:fixed;top:6vh;left:1vw;"></i>
+                  <h1>${friendRequest.from}</h1>
+                  <skinContainer></skinContainer>
+
+                  <buttoncontainer>
+                    <button class="accept" onclick="addFriend('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-check"></i> Accept</button>
+                    <button class="ignore" onclick="this.parentElement.parentElement.outerHTML=''"><i class="fas fa-arrow-up"></i> Ignore</button>
+                    <button class="block" onclick="blockFriend('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-ban"></i> Block</button>
+                  </buttoncontainer>
+                `
+
+                popup.querySelector('skinContainer').append(friendSkinView)
+
+                _createSkinViewFor(friendSkinView)
+
+                $$('body').append(popup)
+              }
+            })
+            notification.send()
+          })
+        }
+      }).catch(() => { fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() })
     }
 
     // return getAccount().name
