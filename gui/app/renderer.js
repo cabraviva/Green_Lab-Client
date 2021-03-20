@@ -698,6 +698,12 @@ function isMyFriend (ign) {
   return isFriend
 }
 
+function requestFriend (ign) {
+  if (socket) {
+    socket.emit('claimFriendRequest', ign)
+  }
+}
+
 function addFriend (ign) {
   const friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8'))
   friends.push(ign)
@@ -724,6 +730,7 @@ window.disableGLC = disableGLC
 window.enableFR = enableFR
 window.disableFR = disableFR
 window.isMyFriend = isMyFriend
+window.requestFriend = requestFriend
 
 // End GLC-Online
 
