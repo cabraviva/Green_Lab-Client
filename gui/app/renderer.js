@@ -684,6 +684,20 @@ function enableFR () {
   fs.writeFileSync((path.join(directory, 'glc-online', 'fr.enabled')), 'true')
 }
 
+function isMyFriend (ign) {
+  let isFriend = false
+
+  JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8')).forEach(__friend => {
+    if (__friend === ign) isFriend = true
+  })
+
+  JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'blocked.json')).toString('utf-8')).forEach(blockedFriend => {
+    if (blockedFriend === ign) isFriend = false
+  })
+
+  return isFriend
+}
+
 function addFriend (ign) {
   const friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8'))
   friends.push(ign)
@@ -709,6 +723,7 @@ window.enableGLC = enableGLC
 window.disableGLC = disableGLC
 window.enableFR = enableFR
 window.disableFR = disableFR
+window.isMyFriend = isMyFriend
 
 // End GLC-Online
 
