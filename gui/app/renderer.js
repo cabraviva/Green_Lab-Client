@@ -4,7 +4,6 @@ const mergeImages = require('merge-images')
 window.socket = null
 
 /* global Notification */
-
 class RawPushNotification {
   constructor (appName, title, body, icon, onClick, autoFocus = true) {
     this.appName = appName
@@ -509,7 +508,7 @@ const pages = {
         <div class="content">
           <h1>GLC Online</h1>
           <p>
-            ${isGerman() ? 'GLC Online ist ein Zusatz-Dienst, der genutzt werden kann um Partys zu erstellen und mit Freunden Minecraft zu spielen. Du hast ihn leider deaktiviert 🙁' : 'GLC Online is a service to play Minecraft with your friends and create partys. To use it activate it in the settings.'}
+            ${isGerman() ? 'GLC Online ist ein Zusatz-Dienst, der genutzt werden kann um partys zu erstellen und mit Freunden Minecraft zu spielen. Du hast ihn leider deaktiviert 🙁' : 'GLC Online is a service to play Minecraft with your friends and create parties. To use it activate it in the settings.'}
           </p>
         </div>
       `
@@ -517,11 +516,16 @@ const pages = {
 
     return `
       <ul class="top-nav">
-        <li class="active">Freunde</li>
-        <li>Partys</li>
+        <li onlick="$$('.friends').show();$$('.parties').hide()" class="active">${isGerman() ? 'Freunde' : 'Friends'}</li>
+        <li onlick="$$('.friends').hide();$$('.parties').show()">${isGerman() ? 'Partys' : 'Parties'}</li>
       </ul>
       <div class="content">
-
+        <div class="friends">
+          ${await friendView()}
+        </div>
+        <div class="parties" style="display:none;">
+          ${await partyView()}
+        </div>
       </div>
     `
   },
@@ -743,6 +747,7 @@ function isMyFriend (ign) {
 
 function requestFriend (ign) {
   if (socket) {
+    console.log(`Sent friend request to ${ign}`)
     socket.emit('claimFriendRequest', ign)
   }
 }
@@ -751,12 +756,14 @@ function addFriend (ign) {
   const friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8'))
   friends.push(ign)
   fs.writeFileSync(path.join(directory, 'glc-online', 'friends.json'), JSON.stringify(friends))
+  skinViewHandler()
 }
 
 function removeFriend (ign) {
   let friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')).toString('utf-8'))
   friends = friends.filter(friend => friend !== ign)
   fs.writeFileSync(path.join(directory, 'glc-online', 'friends.json'), JSON.stringify(friends))
+  skinViewHandler()
 }
 
 function blockFriend (ign) {
@@ -764,12 +771,14 @@ function blockFriend (ign) {
   const blocked = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'blocked.json')).toString('utf-8'))
   blocked.push(ign)
   fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), JSON.stringify(blocked))
+  skinViewHandler()
 }
 
 function unblockFriend (ign) {
   let blocked = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'blocked.json')).toString('utf-8'))
   blocked = blocked.filter(_blocked => _blocked !== ign)
   fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), JSON.stringify(blocked))
+  skinViewHandler()
 }
 
 function sendAcceptFriendNotification (ign) {
@@ -778,6 +787,9 @@ function sendAcceptFriendNotification (ign) {
 
 function sendChatMessage (to, msg) {
   if (!socket) return
+  if (!msg) return
+  if (msg.trim() === '') return
+
   socket.emit('sendChatMessage', { to, msg })
 }
 
@@ -892,6 +904,26 @@ function getSkin (cb) {
     })
   })
 }
+
+async function getIGN () {
+  return ((await getAccessTokenForMC()).selectedProfile.name)
+}
+
+async function __ignHandler () {
+  try {
+    const __acc = getAccount()
+    if (await getIGN() !== __acc.name) {
+      setAccount(await getIGN(), __acc.email, __acc.pw)
+      reloadLauncher()
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+setInterval(__ignHandler, 120 * 1000)
+__ignHandler()
+
 window.getSkin = getSkin
 
 function getAccount () {
@@ -1054,6 +1086,9 @@ var sets = {
   }
 }
 
+function logout () { fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() }
+window.logout = logout
+
 function createSkinViewFor (canvas) {
   canvas.classList.remove('skin_view_chooser')
   const skinViewer = new skinview3d.SkinViewer({
@@ -1104,11 +1139,42 @@ const a = () => {
 
 window.requestAnimationFrame(a)
 
+async function friendView () {
+  let final = `
+    <notskinsearch>
+      <input type="text" class="addfriendclass">
+      <button class="_b __add-btn" onclick="requestFriend($$('.addfriendclass').value);$$('.addfriendclass').value='';$$('.addfriendclass').focus()"><i class="fas fa-plus"></i></button>
+    </notskinsearch>
+  `
+
+  const friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')))
+  friends.forEach((friend, i) => {
+    final += `
+      <div class="friend-view" style="margin-bottom:2vh;">
+        <h2>${friend} <i onclick="removeFriend('${friend}');skinViewHandler()" class="trash-btn fas fa-trash"></i></h2>
+        <input onkeypress="if(event.charCode===13){sendChatMessage('${friend}',this.parentElement.querySelector('input').value);this.parentElement.querySelector('input').value='';this.parentElement.querySelector('input').focus()}" type="text" placeholder="${isGerman() ? 'Eine Nachricht senden' : 'Send a message'}" />
+        <button class="special-button" onclick="sendChatMessage('${friend}',this.parentElement.querySelector('input').value);this.parentElement.querySelector('input').value='';this.parentElement.querySelector('input').focus()">${isGerman() ? 'Senden' : 'Send'}</button>
+      </div>
+    `
+  })
+
+  return final
+}
+
+async function partyView () {
+
+}
+
 // Skin View
 /* global skinview3d */
 window.lastSkinURL = null
 window.skin = null
-function skinViewHandler () {
+async function skinViewHandler () {
+  try {
+    $$('.parties').innerHTML = await partyView()
+    $$('.friends').innerHTML = await friendView()
+  } catch {}
+
   getSkin(skinURL => {
     if (skinURL === window.lastSkinURL) return
     window.lastSkinURL = skinURL

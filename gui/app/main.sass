@@ -201,6 +201,30 @@ button:hover
 #close-btn:hover
   background: rgb(255, 0, 0)
 
+.trash-btn
+  background: #740c0c
+  color: #fff
+  font-size: 50%
+  padding: 2%
+  border-radius: 5px
+  &:hover
+    background: #d11
+    cursor: pointer
+
+.__add-btn
+  background: #237110
+  color: #fff
+  font-size: 50%
+  padding: 2%
+  border-radius: 5px
+  &:hover
+    background: #2ea60d
+    cursor: pointer
+
+.special-button
+  border: 1px solid #000
+  border-radius: 3px
+
 skinsearch
   display: flex
   justify-content: space-around
@@ -216,6 +240,20 @@ skinsearch
     background: none
     background-color: none
     color: #404040
+
+notskinsearch
+  display: flex
+  justify-content: space-around
+  align-items: center
+  *
+    padding: 2%
+    text-align: center
+
+  input
+    width: 30vw
+
+  button
+    width: 7%
 
 skinbox
   ul
@@ -314,3 +352,12 @@ skineditornav, skineditorpreview
           background: #ecd00e
       &:hover
         cursor: pointer
+input
+  outline: none
+  border: 1px solid black
+  border-radius: 3px
+  background: none
+  padding: 0.5%
+  font-family: 'mc'
+  font-size: 100%
+  color: #fff
