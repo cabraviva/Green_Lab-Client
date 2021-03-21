@@ -766,12 +766,24 @@ function blockFriend (ign) {
   fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), JSON.stringify(blocked))
 }
 
+function unblockFriend (ign) {
+  let blocked = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'blocked.json')).toString('utf-8'))
+  blocked = blocked.filter(_blocked => _blocked !== ign)
+  fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), JSON.stringify(blocked))
+}
+
 function sendAcceptFriendNotification (ign) {
   if (socket) socket.emit('addedFriend', ign)
 }
 
+function sendChatMessage (to, msg) {
+  if (!socket) return
+  socket.emit('sendChatMessage', { to, msg })
+}
+
 window.addFriend = addFriend
 window.blockFriend = blockFriend
+window.unblockFriend = unblockFriend
 window.enableGLC = enableGLC
 window.disableGLC = disableGLC
 window.enableFR = enableFR
@@ -779,6 +791,7 @@ window.disableFR = disableFR
 window.isMyFriend = isMyFriend
 window.requestFriend = requestFriend
 window.sendAcceptFriendNotification = sendAcceptFriendNotification
+window.sendChatMessage = sendChatMessage
 
 // End GLC-Online
 
@@ -948,6 +961,16 @@ var sets = {
           socket.on('youAreTheFriendOf', newFriend => {
             const notification = new PushNotification(isGerman() ? 'Akzeptierte Freundschaftsanfrage' : 'Accepted Friend Request', {
               body: isGerman() ? `${newFriend} ist jetzt dein Freund!` : `${newFriend} is now your friend!`
+            })
+
+            notification.send()
+          })
+
+          socket.on('chatMessage', ({ message, from }) => {
+            if (!isMyFriend(from)) return
+
+            const notification = new PushNotification(isGerman() ? `Neue Nachricht von ${from}` : `New message by ${from}`, {
+              body: message
             })
 
             notification.send()
