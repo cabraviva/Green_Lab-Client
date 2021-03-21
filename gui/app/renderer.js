@@ -723,6 +723,10 @@ function blockFriend (ign) {
   fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), JSON.stringify(blocked))
 }
 
+function sendAcceptFriendNotification (ign) {
+  if (socket) socket.emit('addedFriend', ign)
+}
+
 window.addFriend = addFriend
 window.blockFriend = blockFriend
 window.enableGLC = enableGLC
@@ -731,6 +735,7 @@ window.enableFR = enableFR
 window.disableFR = disableFR
 window.isMyFriend = isMyFriend
 window.requestFriend = requestFriend
+window.sendAcceptFriendNotification = sendAcceptFriendNotification
 
 // End GLC-Online
 
@@ -899,6 +904,14 @@ var sets = {
             console.log('[GLC-ONLINE] ' + logmsg)
           })
 
+          socket.on('youAreTheFriendOf', newFriend => {
+            const notification = new PushNotification('Accepted Friend Request', {
+              body: `${newFriend} is now your friend!`
+            })
+
+            notification.send()
+          })
+
           socket.on('receiveFriendRequest', (friendRequest) => {
             let isBlockedFriend = false
             if (fs.readFileSync(path.join(directory, 'glc-online', 'fr.enabled')).toString('utf-8') !== 'true') isBlockedFriend = true
@@ -951,7 +964,7 @@ var sets = {
                   <skinContainer></skinContainer>
 
                   <buttoncontainer>
-                    <button class="accept" onclick="addFriend('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-check"></i> Accept</button>
+                    <button class="accept" onclick="addFriend('${friendRequest.from}');sendAcceptFriendNotification('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-check"></i> Accept</button>
                     <button class="ignore" onclick="this.parentElement.parentElement.outerHTML=''"><i class="fas fa-arrow-up"></i> Ignore</button>
                     <button class="block" onclick="blockFriend('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-ban"></i> Block</button>
                   </buttoncontainer>
