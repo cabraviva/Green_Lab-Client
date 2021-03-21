@@ -504,6 +504,26 @@ const pages = {
   },
   online: async () => {
     // GLC-Online
+    if (fs.readFileSync((path.join(directory, 'glc-online', '.enabled'))).toString('utf-8') !== 'true') {
+      return `
+        <div class="content">
+          <h1>GLC Online</h1>
+          <p>
+            ${isGerman() ? 'GLC Online ist ein Zusatz-Dienst, der genutzt werden kann um Partys zu erstellen und mit Freunden Minecraft zu spielen. Du hast ihn leider deaktiviert 🙁' : 'GLC Online is a service to play Minecraft with your friends and create partys. To use it activate it in the settings.'}
+          </p>
+        </div>
+      `
+    }
+
+    return `
+      <ul class="top-nav">
+        <li class="active">Freunde</li>
+        <li>Partys</li>
+      </ul>
+      <div class="content">
+
+      </div>
+    `
   },
   about: async () => {
     return `
