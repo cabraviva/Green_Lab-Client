@@ -38,13 +38,38 @@
          </ul>
        </account>
        <ul class="_nav">
-         <li onclick="loadPage('game')">Game</li>
-         <li onclick="loadPage('worlds')">Worlds</li>
-         <li onclick="loadPage('servers')">Servers</li>
-         <li onclick="loadPage('mods')">Mods</li>
-         <li onclick="loadPage('packs')">Packs</li>
-         <li onclick="loadPage('skins')">Skins</li>
-         <li onclick="loadPage('about')">About</li>
+         <script type="text/javascript">
+if (!require('fs').existsSync(require('path').join(__getAppData(), '.Green_Lab-Client-MC', 'english-only.enabled'))) require('fs').writeFileSync((require('path').join(__getAppData(), '.Green_Lab-Client-MC', 'english-only.enabled')), 'false')
+
+function __isWin () {
+  return require('os').platform().toLowerCase().includes('win32')
+}
+
+function __getAppData () {
+  if (!__isWin()) return require('os').userInfo().homedir
+  return require('path').join(require('os').userInfo().homedir, require('path').join('AppData', 'Roaming'))
+}
+
+function __german () {
+  if (require('fs').readFileSync(require('path').join(__getAppData(), '.Green_Lab-Client-MC', 'english-only.enabled')).toString('utf-8') === 'true') {
+    return false
+  }
+  return $.lang.toLowerCase().includes('de')
+}
+
+window.__german = __german
+
+/* global $ */
+document.write(`
+        <li onclick="loadPage('game')">${__german() ? 'Spiel' : 'Game'}</li>
+        <li onclick="loadPage('worlds')">${__german() ? 'Welten' : 'Worlds'}</li>
+        <li onclick="loadPage('online')">GLC Online</li>
+        <li onclick="loadPage('mods')">Mods</li>
+        <li onclick="loadPage('packs')">Packs</li>
+        <li onclick="loadPage('skins')">Skins</li>
+        <li onclick="loadPage('about')">${__german() ? 'Über' : 'About'}</li>
+`)
+         </script>
        </ul>
      </nav>
 

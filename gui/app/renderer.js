@@ -1,4 +1,5 @@
-/* global waitfor, zGET, $$, fetch, io, socket */
+/* global waitfor, zGET, $$, fetch, io, socket, __german */
+const isGerman = __german
 const mergeImages = require('merge-images')
 window.socket = null
 
@@ -127,7 +128,11 @@ function changeSkin (skinID) {
           walkAnimation.speed = 1
         })
       }).catch((err) => {
-        window.alert('Skin Error: The Skin ' + skinID + ' is not valid. Please chosse an other Skin')
+        if (isGerman()) {
+          window.alert(`Fehler: Der Skin ${skinID} wurde nicht von Minecraft akzeptiert. Bitte wähle einen anderen Skin aus`)
+        } else {
+          window.alert('Skin Error: The Skin ' + skinID + ' is not valid. Please chosse an other Skin')
+        }
         console.error(err)
       })
     }).catch(() => {
@@ -203,7 +208,7 @@ async function launchVanilla (dir = '', version = { number: null, type: 'release
     if (e.includes('[Render thread/INFO]: Stopping!') && (!e.includes('<'))) {
       // Stopping
       runningVanilla = false
-      $$('centeredplaybtn').any('innerText', 'Play')
+      $$('centeredplaybtn').any('innerText', isGerman() ? 'Spielen' : 'Play')
       win.getCurrentWindow().focus()
     }
     console.log('[DATA] ' + e)
@@ -234,7 +239,7 @@ async function launchOptiFine (dir = '') {
     if ((e.includes('[Render thread/INFO]: Stopping!') || e.includes('[main/INFO]: Stopping!')) && (!e.includes('<'))) {
       // Stopping
       runningVanilla = false
-      $$('centeredplaybtn').any('innerText', 'Play')
+      $$('centeredplaybtn').any('innerText', isGerman() ? 'Spielen' : 'Play')
     }
     console.log('[DATA] ' + e)
   })
@@ -283,12 +288,12 @@ const pages = {
       </ul>
       <div class="content optifine" style="overflow:hidden;padding:0;margin:0">
         <div class="flexer">
-          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', 'Runnning');runningVanilla=true;launchOptiFine()}">Play</centeredplaybtn>
+          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchOptiFine()}">${isGerman() ? 'Spielen' : 'Play'}</centeredplaybtn>
         </div>
       </div>
       <div class="content vanilla" style="overflow:hidden;padding:0;margin:0;display:none;">
         <div class="flexer">
-          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', 'Runnning');runningVanilla=true;launchVanilla()}">Play</centeredplaybtn>
+          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchVanilla()}">${isGerman() ? 'Spielen' : 'Play'}</centeredplaybtn>
         </div>
       </div>
     `
@@ -306,13 +311,18 @@ const pages = {
           try {
             let leveldat = null
             nbt.parse(fs.readFileSync(path.join(world, 'level.dat')), (err, data) => {
-              if (err) return reject(window.alert('An error occurs! INVALID_LEVELDAT_NBT. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world + '\nYou can also try to delete the folder with the world.'))
+              if (err) {
+                if (isGerman()) {
+                  return reject(window.alert(`Ein Fehler ist aufgetreten! INVALID_LEVELDAT_NBT. Bitte melde diesen Fehler auf https://github.com/greeencoder001/Green_Lab-Client/issues/new. Weitere Informationen: ${world}\nProbiere auch den Ordner der Welt zu löschen.`))
+                }
+                return reject(window.alert('An error occurs! INVALID_LEVELDAT_NBT. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world + '\nYou can also try to delete the folder with the world.'))
+              }
               leveldat = data
 
               final += `
                 <div class="world">
                   <h2>${leveldat.value.Data.value.LevelName.value}</h2>
-                  <span class="version">${(leveldat?.value?.Data?.value?.Version?.value?.Name?.value) || 'Unknown Version'}</span>
+                  <span class="version">${(leveldat?.value?.Data?.value?.Version?.value?.Name?.value) || (isGerman() ? 'Unbekannte Version' : 'Unknown Version')}</span>
                 </div>
               `
               i += 1
@@ -348,7 +358,7 @@ const pages = {
       if (skin === null) return
       allSkins += `
         <skin skinfile="${skin.file}">
-          <h4 style="text-align:center;"><span onclick="changeSkin('${skin.file}')" class="choose_this">${skin.name}</span> <i class="fas fa-pen choose_this" onclick="editSkin('${encodeURIComponent(skin.name)}','${encodeURIComponent(skin.file)}')" title="Edit ${skin.name}"></i></h4>
+          <h4 style="text-align:center;"><span onclick="changeSkin('${skin.file}')" class="choose_this">${skin.name}</span> <i class="fas fa-pen choose_this" onclick="editSkin('${encodeURIComponent(skin.name)}','${encodeURIComponent(skin.file)}')" title="${isGerman() ? `${skin.name} bearbeiten` : `Edit ${skin.name}`}"></i></h4>
           <canvas class="skin_view_chooser"></canvas>
         </skin>
       `
@@ -449,7 +459,7 @@ const pages = {
 
     const skineditornav = `
       <skincategory>
-        <h3>Hair</h3>
+        <h3>${isGerman() ? 'Frisuren' : 'Hair'}</h3>
         <skincategoryentries>
           <!--<cosmeticentry>
             <img src="" alt="" />
@@ -461,10 +471,10 @@ const pages = {
 
     return `
       <ul class="top-nav">
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').show();$$('.skin-editor-container').hide()"" class="active">My Skins</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').show();$$('.myskins').hide();$$('.skin-editor-container').hide()">Browse Skins</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').show();$$('.skin-editor-container').hide()"" class="active">${isGerman() ? 'Meine' : 'My'} Skins</li>
+        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').show();$$('.myskins').hide();$$('.skin-editor-container').hide()">${isGerman() ? 'Skins durchsuchen' : 'Browse Skins'}</li>
         <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide();$$('.skin-editor-container').show()">Skin Editor</li>
-        <li onclick="chooseLocalSkin()">Add Skin</li>
+        <li onclick="chooseLocalSkin()">${isGerman() ? 'Skin hinzufügen' : 'Add Skin'}</li>
       </ul>
       <div class="content">
         <div class="skin-editor-container" style="display:none;overflow:hidden;">
@@ -492,20 +502,20 @@ const pages = {
       </div>
     `
   },
-  servers: async () => {
-    // Servers
+  online: async () => {
+    // GLC-Online
   },
   about: async () => {
     return `
       <div class="content">
-        <h1>About Green_Lab Client</h1>
-        <h3>Developed by Green_Lab</h3>
+        <h1>${isGerman() ? 'Über Green_Lab Client' : 'About Green_Lab Client'}</h1>
+        <h3>${isGerman() ? 'Entwickelt von' : 'Developed by'} Green_Lab</h3>
 
-        <h2>Thanks to...</h2>
+        <h2>${isGerman() ? 'Danke an...' : 'Thanks to...'}</h2>
         <ul>
-          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/bs-community/skinview3d">SkinView3D</a> and <a onclick="event.preventDefault();opn(this.href)" href="https://threejs.org">Three.js</a> for the skin viewer</li>
-          <li><a onclick="event.preventDefault();opn(this.href)" href="https://www.electronjs.org">Electron</a> for the cool framework to create the app</li>
-          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/Pierce01/MinecraftLauncher-core#readme">minecraft-launcher-core</a> for the npm module, to make it's possible to run Minecraft</li>
+          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/bs-community/skinview3d">SkinView3D</a> ${isGerman() ? 'und' : 'and'} <a onclick="event.preventDefault();opn(this.href)" href="https://threejs.org">Three.js</a> ${isGerman() ? 'für die Skin Vorschau' : 'for the skin viewer'}</li>
+          <li><a onclick="event.preventDefault();opn(this.href)" href="https://www.electronjs.org">Electron</a> ${isGerman() ? 'für das coole Framework, um den Client zu erstellen' : 'for the cool framework to create the app'}</li>
+          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/Pierce01/MinecraftLauncher-core#readme">minecraft-launcher-core</a> ${isGerman() ? 'für das NPM Modul, welches es erst möglich machte, Minecraft zu starten' : 'for the npm module, to make it possible to run Minecraft'}</li>
         </ul>
       </div>
     `
@@ -516,7 +526,7 @@ const pages = {
 
 function searchForSkin (q) {
   console.log('[SKINS] Searching for ' + q)
-  $$('skinbox.bs ul').innerHTML = `<h1>Searching for ${q} Skins</h1>`
+  $$('skinbox.bs ul').innerHTML = `<h1>${isGerman() ? 'Suche nach' : 'Searching for'} ${q} Skins</h1>`
   waitFor(zGET({ url: `http://minecraft.novaskin.me/search?q=model:Player+${encodeURIComponent(q)}&json=true` }), (skinlist) => {
     skinlist = JSON.parse(skinlist)
     const skins = skinlist.skins
@@ -590,7 +600,7 @@ window.addEventListener('keydown', (e) => {
 
 const prompt = require('electron-prompt')
 async function chooseLocalSkin () {
-  addLocalSkin((await prompt({ title: 'Add Skin', label: 'Enter a name for the skin:', value: 'Skin', type: 'input' })), await openFile())
+  addLocalSkin((await prompt({ title: isGerman() ? 'Skin hinzufügen' : 'Add Skin', label: isGerman() ? 'Gib einen Namen für den neuen Skin ein:' : 'Enter a name for the skin:', value: 'Skin', type: 'input' })), await openFile())
 }
 window.chooseLocalSkin = chooseLocalSkin
 
@@ -660,6 +670,19 @@ const atob = require('atob')
 
 const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
 if (!fs.existsSync(directory)) fs.mkdirSync(directory)
+
+function enableEnglishOnly () {
+  fs.writeFileSync(path.join(directory, 'english-only.enabled'), 'true')
+  reloadLauncher()
+}
+
+function disableEnglishOnly () {
+  fs.writeFileSync(path.join(directory, 'english-only.enabled'), 'false')
+  reloadLauncher()
+}
+
+window.enableEnglishOnly = enableEnglishOnly
+window.disableEnglishOnly = disableEnglishOnly
 
 // Start GLC-Online
 if (!fs.existsSync(path.join(directory, 'glc-online'))) fs.mkdirSync(path.join(directory, 'glc-online'))
@@ -778,7 +801,11 @@ installVanilla().then(_ => {
         console.log('Successfully installed OptiFine')
         fs.writeFileSync(`${directory}/lastVersion.optifine`, optiFineURL.split('&')[0])
         // Run OptiFine Installer
-        window.alert('A new version of OptiFine is available and can be installed. Please press the Install Button in the new Window')
+        if (isGerman()) {
+          window.alert('Eine neue Version von OptiFine ist verfügbar und kann installiert werden. Bitte drücke den Install Button in dem Fenster, welches sich gleich öffnet')
+        } else {
+          window.alert('A new version of OptiFine is available and can be installed. Please press the Install Button in the new Window')
+        }
         let java = 'java'
         if (isWin()) java = 'C:\\Program Files (x86)\\Minecraft Launcher\\runtime\\jre-x64\\bin\\java.exe'
         console.log(`[JAVA] Using Java command: ${java}`)
@@ -826,12 +853,6 @@ function getUUID (name, cb) {
 }
 
 function getSkin (cb) {
-  // getUUID(getAccount().name, (uuid) => {
-  //   waitfor(zGET({ url: `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}` }), (v) => {
-  //     cb(JSON.parse(atob(JSON.parse(v).properties.value)).textures.SKIN.url)
-  //   })
-  // })
-
   getUUID(getAccount().name, (uuid) => {
     waitfor(zGET({ url: `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}` }), (v) => {
       cb(JSON.parse(atob(JSON.parse(v).properties[0].value)).textures.SKIN.url)
@@ -886,7 +907,7 @@ var sets = {
             <div><h1>Login</h1></div>
             <div><input type="text" placeholder="InGame-Name" /></div>
             <div><input type="email" placeholder="E-Mail" /></div>
-            <div><input type="password" placeholder="Password" /></div>
+            <div><input type="password" placeholder="Passwor${isGerman() ? 't' : 'd'}" /></div>
 
             <div><button onclick="setAccount(document.querySelectorAll('div input')[0].value, document.querySelectorAll('div input')[1].value, document.querySelectorAll('div input')[2].value);location.reload()">Login</button></div>
         </body>
@@ -905,8 +926,8 @@ var sets = {
           })
 
           socket.on('youAreTheFriendOf', newFriend => {
-            const notification = new PushNotification('Accepted Friend Request', {
-              body: `${newFriend} is now your friend!`
+            const notification = new PushNotification(isGerman() ? 'Akzeptierte Freundschaftsanfrage' : 'Accepted Friend Request', {
+              body: isGerman() ? `${newFriend} ist jetzt dein Freund!` : `${newFriend} is now your friend!`
             })
 
             notification.send()
@@ -925,8 +946,8 @@ var sets = {
 
             if (isBlockedFriend) return
             console.log(`Received friend request from ${friendRequest.from}`)
-            const notification = new PushNotification('New Friend Request', {
-              body: `${friendRequest.from} wants to be your friend!`,
+            const notification = new PushNotification(isGerman() ? 'Neue Freundschaftsanfrage' : 'New Friend Request', {
+              body: `${friendRequest.from} ${isGerman() ? 'möchte dein Freund sein' : 'wants to be your friend'}!`,
               onClick: async () => {
                 function _createSkinViewFor (canvas) {
                   canvas.classList.remove('skin_view_chooser')
@@ -964,9 +985,9 @@ var sets = {
                   <skinContainer></skinContainer>
 
                   <buttoncontainer>
-                    <button class="accept" onclick="addFriend('${friendRequest.from}');sendAcceptFriendNotification('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-check"></i> Accept</button>
-                    <button class="ignore" onclick="this.parentElement.parentElement.outerHTML=''"><i class="fas fa-arrow-up"></i> Ignore</button>
-                    <button class="block" onclick="blockFriend('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-ban"></i> Block</button>
+                    <button class="accept" onclick="addFriend('${friendRequest.from}');sendAcceptFriendNotification('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-check"></i> ${isGerman() ? 'Annehmen' : 'Accept'}</button>
+                    <button class="ignore" onclick="this.parentElement.parentElement.outerHTML=''"><i class="fas fa-arrow-up"></i> ${isGerman() ? 'Ignorieren' : 'Ignore'}</button>
+                    <button class="block" onclick="blockFriend('${friendRequest.from}');this.parentElement.parentElement.outerHTML=''"><i class="fas fa-ban"></i> ${isGerman() ? 'Blockieren' : 'Block'}</button>
                   </buttoncontainer>
                 `
 
@@ -1084,7 +1105,7 @@ const up2IH = () => {
       $$('.up2DateWaitingScreen')
     } catch {
       $$('body').innerHTML += `
-        <div class="popup up2DateWaitingScreen"><h1 style="text-align:center;">Installing Minecraft</h1></div>
+        <div class="popup up2DateWaitingScreen"><h1 style="text-align:center;">${isGerman() ? 'Minecraft wird installiert' : 'Installing Minecraft'}</h1></div>
       `
     }
   }
