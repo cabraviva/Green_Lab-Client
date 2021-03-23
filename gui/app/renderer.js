@@ -135,8 +135,10 @@ function changeSkin (skinID) {
         console.error(err)
       })
     }).catch(() => {
-      fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN')
-      reloadLauncher()
+      if ((fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`).toString('utf-8') === 'NOT_LOGGED_IN')) {
+        fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN')
+        reloadLauncher()
+      }
     })
   })
 }
@@ -613,6 +615,14 @@ window.editSkin = editSkin
 
 /* global $ */
 function reloadLauncher () {
+  try {
+    if (fs.readFileSync(`${getAppData()}/Green_Lab-Client.refreshed.file`).toString('utf-8') === 'true') return
+  } catch {
+    fs.writeFileSync(`${getAppData()}/Green_Lab-Client.refreshed.file`, 'false')
+    return reloadLauncher()
+  }
+
+  fs.writeFileSync(`${getAppData()}/Green_Lab-Client.refreshed.file`, 'true')
   $.page.refresh()
 }
 
@@ -714,6 +724,7 @@ if (!fs.existsSync(path.join(directory, 'glc-online', '.enabled'))) fs.writeFile
 if (!fs.existsSync(path.join(directory, 'glc-online', 'friends.json'))) fs.writeFileSync(path.join(directory, 'glc-online', 'friends.json'), '[]')
 if (!fs.existsSync(path.join(directory, 'glc-online', 'blocked.json'))) fs.writeFileSync(path.join(directory, 'glc-online', 'blocked.json'), '[]')
 if (!fs.existsSync(path.join(directory, 'glc-online', 'fr.enabled'))) fs.writeFileSync(path.join(directory, 'glc-online', 'fr.enabled'), 'true')
+if (!fs.existsSync(path.join(directory, 'english-only.enabled'))) disableEnglishOnly()
 
 function disableGLC () {
   fs.writeFileSync((path.join(directory, 'glc-online', '.enabled')), 'false')
@@ -980,9 +991,16 @@ var sets = {
       return null
     } else {
       getAccessTokenForMC().then(async ({ accessToken }) => {
+        fs.writeFileSync(`${getAppData()}/Green_Lab-Client.refreshed.file`, 'false')
+
         if (fs.readFileSync(path.join(directory, 'glc-online', '.enabled')).toString('utf-8') === 'true') {
           window.socket = io('https://GreenLabClientParty.greencoder001.repl.co', {
             secure: true,
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            timeout: 500 * 1000,
+            autoConnect: true,
             auth: ({ accessToken, mail: getAccount().email, ign: getAccount().name })
           })
 
@@ -991,6 +1009,8 @@ var sets = {
           })
 
           socket.on('youAreTheFriendOf', newFriend => {
+            addFriend(newFriend)
+
             const notification = new PushNotification(isGerman() ? 'Akzeptierte Freundschaftsanfrage' : 'Accepted Friend Request', {
               body: isGerman() ? `${newFriend} ist jetzt dein Freund!` : `${newFriend} is now your friend!`
             })
@@ -1076,7 +1096,7 @@ var sets = {
             notification.send()
           })
         }
-      }).catch(() => { fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() })
+      }).catch(() => { if ((fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`).toString('utf-8') !== 'NOT_LOGGED_IN')) return; fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() })
     }
 
     // return getAccount().name
@@ -1086,7 +1106,7 @@ var sets = {
   }
 }
 
-function logout () { fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() }
+function logout () { if ((fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`).toString('utf-8') !== 'NOT_LOGGED_IN')) return; fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN'); reloadLauncher() }
 window.logout = logout
 
 function createSkinViewFor (canvas) {
@@ -1199,6 +1219,13 @@ function setSkinViewerSize () {
   if (!window.skin) return
   window.skin.width = Math.floor(window.innerWidth / 7)
   window.skin.height = Math.floor(window.innerHeight / 5)
+
+  if (getAccount() === false) {
+    if ((fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`).toString('utf-8') === 'NOT_LOGGED_IN')) {
+      fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN')
+      reloadLauncher()
+    }
+  }
 }
 
 setInterval(skinViewHandler, 30 * 1000)
