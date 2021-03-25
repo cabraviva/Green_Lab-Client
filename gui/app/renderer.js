@@ -1229,6 +1229,11 @@ function setSkinViewerSize () {
 
 setInterval(skinViewHandler, 30 * 1000)
 setInterval(setSkinViewerSize, 200)
+setTimeout(() => {
+  setInterval(() => {
+    if (socket && socket.disconnected) reloadLauncher()
+  }, 1000)
+}, 20000)
 skinViewHandler()
 
 const up2IH = () => {
