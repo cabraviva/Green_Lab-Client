@@ -862,8 +862,7 @@ installVanilla().then(_ => {
         } else {
           window.alert('A new version of OptiFine is available and can be installed. Please press the Install Button in the new Window')
         }
-        let java = 'java'
-        if (isWin()) java = 'C:\\Program Files (x86)\\Minecraft Launcher\\runtime\\jre-x64\\bin\\java.exe'
+        const java = 'java'
         console.log(`[JAVA] Using Java command: ${java}`)
         const OptiFineInstaller = spawn(java, ['-jar', `${directory}/optifine.jar`])
         OptiFineInstaller.stdout.on('data', (data) => {

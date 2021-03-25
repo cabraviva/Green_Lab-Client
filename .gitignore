@@ -6,3 +6,4 @@ installer/*/src/*
 bin/
 obj/
 Launch Green_Lab Client
+build.cmd

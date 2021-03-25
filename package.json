@@ -30,7 +30,6 @@
     "electron": "^10.4.0"
   },
   "dependencies": {
-    "aternode": "^1.0.7",
     "atob": "^2.1.2",
     "axios": "^0.21.1",
     "custom-electron-titlebar": "^3.2.6",
