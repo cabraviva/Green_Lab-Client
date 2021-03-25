@@ -1003,6 +1003,8 @@ var sets = {
             auth: ({ accessToken, mail: getAccount().email, ign: getAccount().name })
           })
 
+          socket.on('onlineState', console.log)
+
           socket.on('log', (logmsg) => {
             console.log('[GLC-ONLINE] ' + logmsg)
           })
@@ -1158,6 +1160,24 @@ const a = () => {
 
 window.requestAnimationFrame(a)
 
+function onlineCheck (ign, cbf) {
+  if (!socket) return cbf('?')
+  socket.emit('isOnline', ign, _state => {
+    const { state } = _state
+    console.log(`Received State for ${_state.for}: ${state}`)
+    if (state === 'afk') cbf('<i style="color:#da8315;" class="fas fa-moon"></i>')
+    if (state === 'inGame') cbf('<i style="color:#14e678;" class="fas fa-gamepad"></i>')
+    if (state === true) cbf('<i style="color:#14e678;" class="fas fa-circle"></i>')
+    if (state === false) cbf('<i style="color:#af3c1a;" class="fas fa-circle"></i>')
+  })
+}
+
+function asyncOnlineCheck (ign) {
+  return new Promise(function (resolve, reject) {
+    onlineCheck(ign, resolve)
+  })
+}
+
 async function friendView () {
   let final = `
     <notskinsearch>
@@ -1167,15 +1187,16 @@ async function friendView () {
   `
 
   const friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')))
-  friends.forEach((friend, i) => {
+
+  for (const friend of friends) {
     final += `
       <div class="friend-view" style="margin-bottom:2vh;">
-        <h2>${friend} <i onclick="removeFriend('${friend}');skinViewHandler()" class="trash-btn fas fa-trash"></i></h2>
+        <h2>${friend} ${await asyncOnlineCheck(friend)} <i onclick="removeFriend('${friend}');skinViewHandler()" class="trash-btn fas fa-trash"></i></h2>
         <input onkeypress="if(event.charCode===13){sendChatMessage('${friend}',this.parentElement.querySelector('input').value);this.parentElement.querySelector('input').value='';this.parentElement.querySelector('input').focus()}" type="text" placeholder="${isGerman() ? 'Eine Nachricht senden' : 'Send a message'}" />
         <button class="special-button" onclick="sendChatMessage('${friend}',this.parentElement.querySelector('input').value);this.parentElement.querySelector('input').value='';this.parentElement.querySelector('input').focus()">${isGerman() ? 'Senden' : 'Send'}</button>
       </div>
     `
-  })
+  }
 
   return final
 }
@@ -1214,7 +1235,17 @@ async function skinViewHandler () {
   })
 }
 
+window.socketPlaying = null
+
 function setSkinViewerSize () {
+  if (socket) {
+    if (window.socketPlaying !== runningVanilla) {
+      window.socketPlaying = runningVanilla
+      socket.emit('setPlayingState', window.socketPlaying)
+      console.log('Set InGame to: ' + window.socketPlaying)
+    }
+  }
+
   if (!window.skin) return
   window.skin.width = Math.floor(window.innerWidth / 7)
   window.skin.height = Math.floor(window.innerHeight / 5)
