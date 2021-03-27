@@ -902,9 +902,13 @@ function btoa (str) {
 }
 
 function getUUID (name, cb) {
-  waitfor(zGET({ url: `https://api.mojang.com/users/profiles/minecraft/${getAccount().name}` }), (v) => {
-    cb(JSON.parse(v).id)
-  })
+  try {
+    waitfor(zGET({ url: `https://api.mojang.com/users/profiles/minecraft/${getAccount().name}` }), (v) => {
+      cb(JSON.parse(v).id)
+    })
+  } catch {
+    $.page.refresh()
+  }
 }
 
 function getSkin (cb) {
