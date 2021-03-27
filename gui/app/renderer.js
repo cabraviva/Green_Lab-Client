@@ -1,7 +1,10 @@
 /* global waitfor, zGET, $$, fetch, io, socket, __german */
 const isGerman = __german
+window.isGerman = isGerman
 const mergeImages = require('merge-images')
 window.socket = null
+
+const { getAccount, setAccount } = require('./lib/mcapi')
 
 /* global Notification */
 class RawPushNotification {
@@ -72,25 +75,16 @@ window._log = console.log
 console.log = (...logs) => {
   logs.forEach((item) => {
     try {
-      if (item.includes('THREE.WebGLRenderer: Context Lost.')) window.lastSkinURL = null
+      if (item.includes('THREE.WebGLRenderer: Context Lost.')) reloadLauncher()
     } catch {}
   })
   window._log(...logs)
 }
 
-async function getLatest () {
-  const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
-  return launchermeta.versions.filter((version) => { return version.id === launchermeta.latest.release })[0]
-}
-window.getLatest = getLatest
-
-const mojang = require('mojang')
 const random = require('./random.js')
 const getOptifineDownloadURL = require('./optifine-url.js')
 const dlFile = require('./dlfile.js')
-const axios = require('axios')
 const os = require('os-utils')
-const _os = require('os')
 const path = require('path')
 const win = require('./win.js')
 const opn = require('opn')
@@ -101,47 +95,7 @@ const openFile = async function openFile () {
   return (await (require('electron').remote.dialog).showOpenDialog()).filePaths[0]
 }
 
-function changeSkin (skinID) {
-  console.log('[SKINS] Changing to skin ' + skinID)
-  getUUID(getAccount().name, uuid => {
-    getAccessTokenForMC().then(({ accessToken }) => {
-      const stream = fs.createReadStream(`${getAppData()}/.Green_Lab-Client-MC/skins/${skinID}`)
-      mojang.uploadSkin({ accessToken }, uuid, stream, false).then(() => {
-        console.log('[SKINS] Changed to skin ' + skinID)
-        getSkin(skinURL => {
-          if (skinURL === window.lastSkinURL) return
-          window.lastSkinURL = skinURL
-          window.skin = new skinview3d.SkinViewer({
-            canvas: $$('#skinView'),
-            width: Math.floor(window.innerWidth / 7),
-            height: Math.floor(window.innerHeight / 5),
-            skin: skinURL
-          })
-
-          const control = skinview3d.createOrbitControls(window.skin)
-          control.enableRotate = false
-          control.enableZoom = false
-          control.enablePan = false
-
-          const walkAnimation = window.skin.animations.add(skinview3d.WalkingAnimation)
-          walkAnimation.speed = 1
-        })
-      }).catch((err) => {
-        if (isGerman()) {
-          window.alert(`Fehler: Der Skin ${skinID} wurde nicht von Minecraft akzeptiert. Bitte wähle einen anderen Skin aus`)
-        } else {
-          window.alert('Skin Error: The Skin ' + skinID + ' is not valid. Please chosse an other Skin')
-        }
-        console.error(err)
-      })
-    }).catch(() => {
-      if ((fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`).toString('utf-8') === 'NOT_LOGGED_IN')) {
-        fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/account.json`, 'NOT_LOGGED_IN')
-        reloadLauncher()
-      }
-    })
-  })
-}
+const { changeSkin } = require('./lib/mcapi')
 window.changeSkin = changeSkin
 
 window.opn = opn
@@ -158,29 +112,17 @@ function auth () {
   return Authenticator.getAuth(acc.email, acc.pw)
 }
 
-function isWin () {
-  return _os.platform().toLowerCase().includes('win32')
-}
-
-function getAppData () {
-  if (!isWin()) return _os.userInfo().homedir
-  return path.join(_os.userInfo().homedir, path.join('AppData', 'Roaming'))
-}
-
-async function jsonFetch (url) {
-  return await (await fetch(url)).json()
-}
-
-async function getLatestMCJSON () {
-  return (JSON.stringify((await jsonFetch((await getLatest()).url))))
-}
+const { /* isWin, */ getAppData } = require('./lib/glc-path')
+const { getVersion } = require('./lib/info')
+const { jsonFetch, getLatestMCJSON, getLatest } = require('./lib/http')
+window.getVersion = getVersion
 window.getLatestMCJSON = getLatestMCJSON
 
 async function getLatestMCDownload () {
   return (await jsonFetch((await getLatest()).url)).downloads.client.url
 }
 window.getLatestMCDownload = getLatestMCDownload
-
+window.getLatest = getLatest
 async function getLatestVersion () {
   const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
   return launchermeta.latest.release
@@ -256,17 +198,7 @@ function mcRam () {
   }
 }
 
-async function getAccessTokenForMC () {
-  const account = getAccount()
-  return (await axios.post('https://authserver.mojang.com/authenticate', {
-    agent: {
-      name: 'Minecraft',
-      version: 1
-    },
-    username: account.email,
-    password: account.pw
-  }, { 'Content-Type': 'application/json' })).data
-}
+const { getAccessTokenForMC } = require('./lib/mcapi')
 window.getAccessTokenForMC = getAccessTokenForMC
 
 var currentPage = 'game'
@@ -700,7 +632,6 @@ $$('body').style.background = `url('${random.choose(pictures)}.png') no-repeat c
 $$('body').style.backgroundSize = 'cover'
 
 const fs = require('fs')
-const atob = require('atob')
 
 const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
 if (!fs.existsSync(directory)) fs.mkdirSync(directory)
@@ -896,28 +827,9 @@ installVanilla().then(_ => {
   })
 })
 
-function btoa (str) {
-  if (Buffer.byteLength(str) !== str.length) throw new Error('bad string!')
-  return Buffer.from(str, 'binary').toString('base64')
-}
+const { atob } = require('./lib/b64')
 
-function getUUID (name, cb) {
-  try {
-    waitfor(zGET({ url: `https://api.mojang.com/users/profiles/minecraft/${getAccount().name}` }), (v) => {
-      cb(JSON.parse(v).id)
-    })
-  } catch {
-    $.page.refresh()
-  }
-}
-
-function getSkin (cb) {
-  getUUID(getAccount().name, (uuid) => {
-    waitfor(zGET({ url: `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}` }), (v) => {
-      cb(JSON.parse(atob(JSON.parse(v).properties[0].value)).textures.SKIN.url)
-    })
-  })
-}
+const { getSkin } = require('./lib/mcapi')
 
 async function getIGN () {
   return ((await getAccessTokenForMC()).selectedProfile.name)
@@ -940,23 +852,6 @@ __ignHandler()
 
 window.getSkin = getSkin
 
-function getAccount () {
-  try {
-    const acc = JSON.parse(fs.readFileSync(directory + '/account.json'))
-    return {
-      name: acc.name,
-      email: acc.email,
-      pw: atob(acc.pw)
-    }
-  } catch {
-    return false
-  }
-}
-
-function setAccount (name, email, pw) {
-  pw = btoa(pw)
-  fs.writeFileSync(directory + '/account.json', JSON.stringify({ name, pw, email }))
-}
 window.setAccount = setAccount
 
 var sets = {
