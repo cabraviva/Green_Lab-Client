@@ -148,6 +148,30 @@ async function launchVanilla (dir = '', version = { number: null, type: 'release
   win.minimizeWindow()
   launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
   launcher.on('data', (e) => {
+    if (window.playingSinglePlayer === '!no') {
+      if (e.includes('Saving chunks for level') && !e.includes('all chunks') && !e.includes('All chunks')) window.playingSinglePlayer = false
+    } else {
+      if (e.includes('Saving chunks for level') && !e.includes('all chunks') && !e.includes('All chunks')) {
+        const currentLevel = e.replace(/(.*?)'ServerLevel\[(.*?)\]'\/(.*?)/, '$2').replace(/minecraft:overworld/g, '').replace(/minecraft:the_end/g, '').replace(/minecraft:the_nether/g, '')
+        console.log('Saved Chunks:', currentLevel)
+        window.playingSinglePlayer = true
+        dc.setActivity({
+          details: 'Single Player',
+          state: `${currentLevel}`,
+          startTimestamp: dc.getActivity().startTimestamp
+        })
+      }
+    }
+
+    if (e.includes('Stopping server') && window.playingSinglePlayer === true) {
+      window.playingSinglePlayer = '!no'
+      dc.setActivity({
+        details: 'In Game',
+        state: 'Main Menu',
+        startTimestamp: dc.getActivity().startTimestamp
+      })
+    }
+
     if (e.includes('[Render thread/INFO]: Stopping!') && (!e.includes('<'))) {
       // Stopping
       runningVanilla = false
@@ -184,6 +208,31 @@ async function launchOptiFine (dir = '') {
       runningVanilla = false
       $$('centeredplaybtn').any('innerText', isGerman() ? 'Spielen' : 'Play')
     }
+
+    if (window.playingSinglePlayer === '!no') {
+      if (e.includes('Saving chunks for level') && !e.includes('all chunks') && !e.includes('All chunks')) window.playingSinglePlayer = false
+    } else {
+      if (e.includes('Saving chunks for level') && !e.includes('all chunks') && !e.includes('All chunks')) {
+        const currentLevel = e.replace(/(.*?)'ServerLevel\[(.*?)\]'\/(.*?)/, '$2').replace(/minecraft:overworld/g, '').replace(/minecraft:the_end/g, '').replace(/minecraft:the_nether/g, '')
+        console.log('Saved Chunks:', currentLevel)
+        window.playingSinglePlayer = true
+        dc.setActivity({
+          details: 'Single Player',
+          state: `${currentLevel}`,
+          startTimestamp: dc.getActivity().startTimestamp
+        })
+      }
+    }
+
+    if (e.includes('Stopping server') && window.playingSinglePlayer === true) {
+      window.playingSinglePlayer = '!no'
+      dc.setActivity({
+        details: 'In Game',
+        state: 'Main Menu',
+        startTimestamp: dc.getActivity().startTimestamp
+      })
+    }
+
     console.log('[DATA] ' + e)
   })
   // const launcher = launchVanilla(undefined, { type: 'release', number: (fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/latest.optifine.mc.num`).toString('utf-8')), custom: 'of' })
@@ -1137,11 +1186,24 @@ async function skinViewHandler () {
 window.socketPlaying = null
 
 function setSkinViewerSize () {
-  if (socket) {
-    if (window.socketPlaying !== runningVanilla) {
+  if (window.socketPlaying !== runningVanilla) {
+    if (socket) {
       window.socketPlaying = runningVanilla
       socket.emit('setPlayingState', window.socketPlaying)
       console.log('Set InGame to: ' + window.socketPlaying)
+    }
+
+    if (window.socketPlaying) {
+      dc.setActivity({
+        details: 'In Game',
+        state: 'Main Menu',
+        startTimestamp: dc.getActivity().startTimestamp
+      })
+    } else {
+      dc.setActivity({
+        details: 'Idle',
+        startTimestamp: dc.getActivity().startTimestamp
+      })
     }
   }
 
@@ -1186,3 +1248,10 @@ up2IH()
 ;(async () => {
   process.versions.minecraft = await getLatestVersion()
 })()
+
+const dc = require('./lib/discord')
+dc.setActivity({
+  details: 'Idle',
+  largeImageKey: 'icon',
+  startTimestamp: dc.getActivity().startTimestamp
+})

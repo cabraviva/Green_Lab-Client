@@ -1,5 +1,7 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require('electron')
+const dcClientID = '777488569345769482'
+const client = require('discord-rich-presence')(dcClientID)
 
 function createWindow () {
   // Create the browser window.
@@ -24,6 +26,12 @@ function createWindow () {
   // mainWindow.webContents.openDevTools()
 }
 
+global.activity = {
+  state: 'In Launcher',
+  details: 'Idle',
+  startTimestamp: new Date()
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -46,3 +54,21 @@ app.on('window-all-closed', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+function setActivity () {
+  client.updatePresence({
+    state: global.activity.state,
+    details: global.activity.details,
+    startTimestamp: global.activity.startTimestamp,
+    largeImageKey: global.activity.largeImageKey || 'icon',
+    smallImageKey: global.activity.smallImageKey
+  })
+}
+
+client.on('error', console.error)
+
+setActivity()
+
+setInterval(() => {
+  setActivity()
+}, 1000)
