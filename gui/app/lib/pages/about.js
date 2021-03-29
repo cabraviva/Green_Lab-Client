@@ -5,6 +5,7 @@ module.exports = async () => {
     <div class="content">
       <h1>${isGerman() ? 'Über Green_Lab Client' : 'About Green_Lab Client'}</h1>
       <h3>${isGerman() ? 'Entwickelt von' : 'Developed by'} Green_Lab</h3>
+      <h3>Version: ${window.getVersion()}</h3>
 
       <h2>${isGerman() ? 'Danke an...' : 'Thanks to...'}</h2>
       <ul>

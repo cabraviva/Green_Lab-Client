@@ -69,29 +69,25 @@ console.log = (...logs) => {
   window._log(...logs)
 }
 
-const random = require('./random.js')
-const getOptifineDownloadURL = require('./optifine-url.js')
-const dlFile = require('./dlfile.js')
+const random = require('./lib/random.js')
+const getOptifineDownloadURL = require('./lib/optifine-url.js')
+const dlFile = require('./lib/dlfile.js')
 const os = require('os-utils')
+const { Client, Authenticator } = require('minecraft-launcher-core')
 const path = require('path')
-const win = require('./win.js')
+const win = require('./lib/win.js')
 const opn = require('opn')
 const { v4: uuidv4 } = require('uuid')
 
-const openFile = async function openFile () {
-  return (await (require('electron').remote.dialog).showOpenDialog()).filePaths[0]
-}
+const { openFile } = require('./lib/fs-plus')
 
 const { changeSkin } = require('./lib/mcapi')
 window.changeSkin = changeSkin
-
 window.opn = opn
 
 win.maximizeWindow()
-const { Client, Authenticator } = require('minecraft-launcher-core')
 
 var runningVanilla = false
-window.rmc = runningVanilla
 
 function auth () {
   const acc = getAccount()
@@ -102,7 +98,6 @@ const { /* isWin, */ getAppData } = require('./lib/glc-path')
 const { getVersion } = require('./lib/info')
 const { jsonFetch, getLatestMCJSON, getLatest } = require('./lib/http')
 window.getVersion = getVersion
-window.getLatestMCJSON = getLatestMCJSON
 
 async function getLatestMCDownload () {
   return (await jsonFetch((await getLatest()).url)).downloads.client.url
@@ -376,14 +371,7 @@ window.addSkin = addSkin
 
 loadPage(currentPage)
 
-const pictures = [
-  'mansion',
-  'snow',
-  'underwater',
-  'swamp',
-  'dungeon',
-  'endcity'
-]
+const pictures = require('./lib/pictures.js')
 
 window.isVanillaUpToDate = false
 window.isOptiFineUpToDate = false

@@ -8,4 +8,8 @@ const walk = async function * walk (dir) {
   }
 }
 
-module.exports = { walk }
+async function openFile () {
+  return (await (require('electron').remote.dialog).showOpenDialog()).filePaths[0]
+}
+
+module.exports = { walk, openFile }
