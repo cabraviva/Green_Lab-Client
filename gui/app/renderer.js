@@ -596,6 +596,10 @@ async function __ignHandler () {
   }
 }
 
+win.getCurrentWindow().webContents.on('new-window', function (e, url, foo, bar, _window) {
+  require('electron').shell.openExternal(url)
+})
+
 setInterval(__ignHandler, 120 * 1000)
 __ignHandler()
 

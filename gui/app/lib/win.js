@@ -4,6 +4,12 @@ function getCurrentWindow() {
   return remote.getCurrentWindow();
 }
 
+function closeChildWindows () {
+  var windows = remote.BrowserWindow.getAllWindows()
+  windows = windows.filter(_win => _win !== getCurrentWindow())
+  windows.forEach(__win => __win.close())
+}
+
 function openMenu(x, y) {
   ipcRenderer.send(`display-app-menu`, { x, y });
 }
@@ -51,4 +57,5 @@ module.exports = {
   maxUnmaxWindow,
   isWindowMaximized,
   closeWindow,
+  closeChildWindows
 }

@@ -12,6 +12,7 @@
     <script type="text/javascript" src="lib/skin-view.js"></script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css" integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
     <script src="https://greenlabclientparty.greencoder001.repl.co/socket.io/socket.io.js"></script>
+    <script src="https://platform.twitter.com/widgets.js"></script>
   </head>
   <link rel="stylesheet" href="main.min.css">
   <body style="background-size:cover;">
@@ -30,7 +31,7 @@
      <nav>
        <account>
          <ul>
-           <li class="flex"><name set="name@innerHTML"></name></li>
+           <li class="flex __cursor_pointer__" onclick="opn('www.minecraft.net/profile')"><name set="name@innerHTML"></name></li>
            <!-- <li class="flex"><img class="skinIMG" set="skin@src"></li> -->
            <li class="flex">
              <canvas id="skinView"></canvas>

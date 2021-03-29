@@ -18,5 +18,15 @@ module.exports = async () => {
         <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchVanilla()}">${isGerman() ? 'Spielen' : 'Play'}</centeredplaybtn>
       </div>
     </div>
+
+    <iframe class="hoverflow" src="https://greenlabclient.greencoder001.repl.co/snapshots/latest/" style="
+      position: fixed;
+      top: 15vh;
+      height: 80vh;
+      width: 20vw;
+      right: 3vw;
+    "></iframe>
+
+    <div class="twittget"><a data-theme="dark" data-chrome="transparent" class="twitter-timeline" href="https://twitter.com/Minecraft?ref_src=twsrc%5Etfw">Tweets by Minecraft</a></div>
   `
 }

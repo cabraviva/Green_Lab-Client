@@ -61,38 +61,41 @@ nav
         cursor: pointer
         background: rgba(11,11,11, 0.7)
 
+// ::-webkit-scrollbar
+//   width: 5px
+//   height: 5px
+//
+// ::-webkit-scrollbar-button
+//   width: 0px
+//   height: 0px
+//
+// ::-webkit-scrollbar-thumb
+//   background: #e1e1e1
+//   border: 0px none #ffffff
+//   border-radius: 50px
+//
+// ::-webkit-scrollbar-thumb:hover
+//   background: #ffffff
+//
+// ::-webkit-scrollbar-thumb:active
+//   background: #ddd
+//
+// ::-webkit-scrollbar-track
+//   background: #666666
+//   border: 0px none #ffffff
+//   border-radius: 50px
+//
+// ::-webkit-scrollbar-track:hover
+//   background: #666666
+//
+// ::-webkit-scrollbar-track:active
+//   background: #333333
+//
+// ::-webkit-scrollbar-corner
+//   background: transparent
+
 ::-webkit-scrollbar
-  width: 5px
-  height: 5px
-
-::-webkit-scrollbar-button
-  width: 0px
-  height: 0px
-
-::-webkit-scrollbar-thumb
-  background: #e1e1e1
-  border: 0px none #ffffff
-  border-radius: 50px
-
-::-webkit-scrollbar-thumb:hover
-  background: #ffffff
-
-::-webkit-scrollbar-thumb:active
-  background: #ddd
-
-::-webkit-scrollbar-track
-  background: #666666
-  border: 0px none #ffffff
-  border-radius: 50px
-
-::-webkit-scrollbar-track:hover
-  background: #666666
-
-::-webkit-scrollbar-track:active
-  background: #333333
-
-::-webkit-scrollbar-corner
-  background: transparent
+  display: none
 
 body
   -webkit-background-size: cover
@@ -366,3 +369,18 @@ input
   h2
     i
       font-size: 50%
+
+.__cursor_pointer__
+  &:hover
+    cursor: pointer
+.twittget
+  position: fixed
+  top: 15vh
+  height: 80vh
+  width: 20vw
+  left:  $nav-width + 3vw
+  overflow: auto
+
+.hoverflow
+  border: none
+  outline: none
