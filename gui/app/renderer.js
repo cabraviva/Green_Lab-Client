@@ -36,18 +36,6 @@ class PushNotification extends RawPushNotification {
   }
 }
 
-const listCosmetics = async () => {
-  const cosmetics = await jsonFetch('https://greenlabclient.greencoder001.repl.co/skin-editor/cosmetics/list/')
-  return cosmetics
-}
-
-async function getCosmeticByID (id) {
-  return await jsonFetch(`https://greenlabclient.greencoder001.repl.co/skin-editor/cosmetics/view/${id}`)
-}
-
-window.listCosmetics = listCosmetics
-window.getCosmeticByID = getCosmeticByID
-
 const sortCosmeticTexturesByPriority = (rawTextures) => {
   const textures = rawTextures.sort((last, current) => {
     if (last.priority > current.priority) return 1
@@ -88,7 +76,6 @@ const os = require('os-utils')
 const path = require('path')
 const win = require('./win.js')
 const opn = require('opn')
-const nbt = require('nbt')
 const { v4: uuidv4 } = require('uuid')
 
 const openFile = async function openFile () {
@@ -99,7 +86,6 @@ const { changeSkin } = require('./lib/mcapi')
 window.changeSkin = changeSkin
 
 window.opn = opn
-window.nbt = nbt
 
 win.maximizeWindow()
 const { Client, Authenticator } = require('minecraft-launcher-core')
@@ -260,273 +246,11 @@ function loadPage (id) {
 }
 
 const pages = {
-  game: async () => {
-    return `
-      <ul class="top-nav">
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').hide();$$('.optifine').show()" class="active">OptiFine</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').show();$$('.optifine').hide()">Vanilla</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').hide();$$('.optifine').hide()">Fabric</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.vanilla').hide();$$('.optifine').hide()">Forge</li>
-      </ul>
-      <div class="content optifine" style="overflow:hidden;padding:0;margin:0">
-        <div class="flexer">
-          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchOptiFine()}">${isGerman() ? 'Spielen' : 'Play'}</centeredplaybtn>
-        </div>
-      </div>
-      <div class="content vanilla" style="overflow:hidden;padding:0;margin:0;display:none;">
-        <div class="flexer">
-          <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchVanilla()}">${isGerman() ? 'Spielen' : 'Play'}</centeredplaybtn>
-        </div>
-      </div>
-    `
-  },
-  worlds: () => {
-    return new Promise((resolve, reject) => {
-      let final = ''
-      let worlds = []
-      allWorlds(w => {
-        worlds.push(w)
-      }).then(() => {
-        worlds = worlds.filter((elem) => { return !elem.endsWith('.zip') })
-        let i = 0
-        for (const world of worlds) {
-          try {
-            let leveldat = null
-            nbt.parse(fs.readFileSync(path.join(world, 'level.dat')), (err, data) => {
-              if (err) {
-                if (isGerman()) {
-                  return reject(window.alert(`Ein Fehler ist aufgetreten! INVALID_LEVELDAT_NBT. Bitte melde diesen Fehler auf https://github.com/greeencoder001/Green_Lab-Client/issues/new. Weitere Informationen: ${world}\nProbiere auch den Ordner der Welt zu löschen.`))
-                }
-                return reject(window.alert('An error occurs! INVALID_LEVELDAT_NBT. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world + '\nYou can also try to delete the folder with the world.'))
-              }
-              leveldat = data
-
-              final += `
-                <div class="world">
-                  <h2>${leveldat.value.Data.value.LevelName.value}</h2>
-                  <span class="version">${(leveldat?.value?.Data?.value?.Version?.value?.Name?.value) || (isGerman() ? 'Unbekannte Version' : 'Unknown Version')}</span>
-                </div>
-              `
-              i += 1
-
-              if (i >= worlds.length) {
-                resolve(`
-                  <div class="content">
-                    ${final}
-                  </div>
-                `)
-              }
-            })
-          } catch (err) {
-            console.warn('Error: Reading World ' + world + ' failed')
-            // window.alert('An error occurs! INVALID_WORLD. Please report this issue on https://github.com/greencoder001/Green_Lab-Client/issues/new. FURTHER INFORMATION: ' + world + ' [See Console] \nYou can also try to delete the folder with the world.')
-            i += 1
-            if (i >= worlds.length) {
-              resolve(`
-                <div class="content">
-                  ${final}
-                </div>
-              `)
-            }
-          }
-        }
-      })
-    })
-  },
-  skins: async () => {
-    let allSkins = ''
-    const skinIndex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
-    skinIndex.forEach((skin, index) => {
-      if (skin === null) return
-      allSkins += `
-        <skin skinfile="${skin.file}">
-          <h4 style="text-align:center;"><span onclick="changeSkin('${skin.file}')" class="choose_this">${skin.name}</span> <i class="fas fa-pen choose_this" onclick="editSkin('${encodeURIComponent(skin.name)}','${encodeURIComponent(skin.file)}')" title="${isGerman() ? `${skin.name} bearbeiten` : `Edit ${skin.name}`}"></i></h4>
-          <canvas class="skin_view_chooser"></canvas>
-        </skin>
-      `
-    })
-
-    const cosmeticList = await listCosmetics()
-
-    const skineditornaventries = {
-      hair: '',
-      skins: '',
-      eyes: '',
-      faces: '',
-      clothes: '',
-      arms: '',
-      legs: '',
-      accessoires: ''
-    }
-
-    for (const _cosmetic of cosmeticList.hairs) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.hair += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    for (const _cosmetic of cosmeticList.skins) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.skins += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    for (const _cosmetic of cosmeticList.eyes) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.eyes += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    for (const _cosmetic of cosmeticList.faces) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.faces += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    for (const _cosmetic of cosmeticList.clothes) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.clothes += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    for (const _cosmetic of cosmeticList.arms) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.arms += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    for (const _cosmetic of cosmeticList.legs) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.legs += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    for (const _cosmetic of cosmeticList.accessoires) {
-      const cosmeticInfo = await getCosmeticByID(_cosmetic.id)
-      skineditornaventries.accessoires += `
-        <cosmeticentry cosmeticid="${_cosmetic.id}">
-          <cosmeticname>${cosmeticInfo.name} <i>by ${cosmeticInfo.creator}</i></cosmeticname>
-          <img src="${cosmeticInfo.screenshot}" alt="${cosmeticInfo.name}" />
-        </cosmeticentry>
-      `
-    }
-
-    const skineditornav = `
-      <skincategory>
-        <h3>${isGerman() ? 'Frisuren' : 'Hair'}</h3>
-        <skincategoryentries>
-          <!--<cosmeticentry>
-            <img src="" alt="" />
-          </cosmeticentry>-->
-          ${skineditornaventries.hair}
-        </skincategoryentries>
-      </skincategory>
-    `
-
-    return `
-      <ul class="top-nav">
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').show();$$('.skin-editor-container').hide()"" class="active">${isGerman() ? 'Meine' : 'My'} Skins</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').show();$$('.myskins').hide();$$('.skin-editor-container').hide()">${isGerman() ? 'Skins durchsuchen' : 'Browse Skins'}</li>
-        <li onclick="$$('.top-nav li').removeClass('active');this.classList.add('active');$$('.browseonly').hide();$$('.myskins').hide();$$('.skin-editor-container').show()">Skin Editor</li>
-        <li onclick="chooseLocalSkin()">${isGerman() ? 'Skin hinzufügen' : 'Add Skin'}</li>
-      </ul>
-      <div class="content">
-        <div class="skin-editor-container" style="display:none;overflow:hidden;">
-          <skineditornav>
-            ${skineditornav}
-          </skineditornav>
-          <skineditorpreview>
-
-          </skineditorpreview>
-        </div>
-        <div class="browseonly" style="display:none;">
-          <skinsearch>
-            <input type="text" class="searchForSkin"/>
-            <button class="_b" onclick="searchForSkin($$('.searchForSkin').value)"><i class="fas fa-search"></i></button>
-          </skinsearch>
-          <skinbox class="bs"><ul></ul></skinbox>
-        </div>
-        <div class="myskins">
-          <skinbox>
-            <ul>
-              ${allSkins}
-            </ul>
-          </skinbox>
-        </div>
-      </div>
-    `
-  },
-  online: async () => {
-    // GLC-Online
-    if (fs.readFileSync((path.join(directory, 'glc-online', '.enabled'))).toString('utf-8') !== 'true') {
-      return `
-        <div class="content">
-          <h1>GLC Online</h1>
-          <p>
-            ${isGerman() ? 'GLC Online ist ein Zusatz-Dienst, der genutzt werden kann um partys zu erstellen und mit Freunden Minecraft zu spielen. Du hast ihn leider deaktiviert 🙁' : 'GLC Online is a service to play Minecraft with your friends and create parties. To use it activate it in the settings.'}
-          </p>
-        </div>
-      `
-    }
-
-    return `
-      <ul class="top-nav">
-        <li onlick="$$('.friends').show();$$('.parties').hide()" class="active">${isGerman() ? 'Freunde' : 'Friends'}</li>
-        <li onlick="$$('.friends').hide();$$('.parties').show()">${isGerman() ? 'Partys' : 'Parties'}</li>
-      </ul>
-      <div class="content">
-        <div class="friends">
-          ${await friendView()}
-        </div>
-        <div class="parties" style="display:none;">
-          ${await partyView()}
-        </div>
-      </div>
-    `
-  },
-  about: async () => {
-    return `
-      <div class="content">
-        <h1>${isGerman() ? 'Über Green_Lab Client' : 'About Green_Lab Client'}</h1>
-        <h3>${isGerman() ? 'Entwickelt von' : 'Developed by'} Green_Lab</h3>
-
-        <h2>${isGerman() ? 'Danke an...' : 'Thanks to...'}</h2>
-        <ul>
-          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/bs-community/skinview3d">SkinView3D</a> ${isGerman() ? 'und' : 'and'} <a onclick="event.preventDefault();opn(this.href)" href="https://threejs.org">Three.js</a> ${isGerman() ? 'für die Skin Vorschau' : 'for the skin viewer'}</li>
-          <li><a onclick="event.preventDefault();opn(this.href)" href="https://www.electronjs.org">Electron</a> ${isGerman() ? 'für das coole Framework, um den Client zu erstellen' : 'for the cool framework to create the app'}</li>
-          <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/Pierce01/MinecraftLauncher-core#readme">minecraft-launcher-core</a> ${isGerman() ? 'für das NPM Modul, welches es erst möglich machte, Minecraft zu starten' : 'for the npm module, to make it possible to run Minecraft'}</li>
-        </ul>
-      </div>
-    `
-  }
+  game: require('./lib/pages/game'),
+  worlds: require('./lib/pages/worlds'),
+  skins: require('./lib/pages/skins'),
+  online: require('./lib/pages/glc-online'),
+  about: require('./lib/pages/about')
 }
 
 /* global waitFor */
@@ -630,7 +354,7 @@ function addLocalSkin (name, file) {
   })
   fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`, JSON.stringify(skinDex))
   console.log(`[SKINS] Added Skin ${name} to My Skins`)
-  reloadLauncher()
+  loadPage('skins')
 }
 
 function addSkin (name, url) {
@@ -644,7 +368,7 @@ function addSkin (name, url) {
     })
     fs.writeFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`, JSON.stringify(skinDex))
     console.log(`[SKINS] Added Skin ${name} to My Skins`)
-    reloadLauncher()
+    loadPage('skins')
   }, () => {})
 }
 
@@ -661,22 +385,10 @@ const pictures = [
   'endcity'
 ]
 
-const walk = async function * walk (dir) {
-  for await (const d of await fs.promises.opendir(dir)) {
-    const entry = path.join(dir, d.name)
-    yield entry
-  }
-}
-
-async function allWorlds (cb) {
-  for await (const p of walk(path.join(getAppData(), '.minecraft/saves'))) {
-    cb(p)
-  }
-}
-
 window.isVanillaUpToDate = false
 window.isOptiFineUpToDate = false
 
+// Random MC Picture:
 $$('body').style.background = `url('${random.choose(pictures)}.png') no-repeat center center fixed`
 $$('body').style.backgroundSize = 'cover'
 
@@ -1108,50 +820,7 @@ const a = () => {
 
 window.requestAnimationFrame(a)
 
-function onlineCheck (ign, cbf) {
-  if (!socket) return cbf('?')
-  socket.emit('isOnline', ign, _state => {
-    const { state } = _state
-    console.log(`Received State for ${_state.for}: ${state}`)
-    if (state === 'afk') cbf('<i style="color:#da8315;" class="fas fa-moon"></i>')
-    if (state === 'inGame') cbf('<i style="color:#14e678;" class="fas fa-gamepad"></i>')
-    if (state === true) cbf('<i style="color:#14e678;" class="fas fa-circle"></i>')
-    if (state === false) cbf('<i style="color:#af3c1a;" class="fas fa-circle"></i>')
-  })
-}
-
-function asyncOnlineCheck (ign) {
-  return new Promise(function (resolve, reject) {
-    onlineCheck(ign, resolve)
-  })
-}
-
-async function friendView () {
-  let final = `
-    <notskinsearch>
-      <input type="text" class="addfriendclass">
-      <button class="_b __add-btn" onclick="requestFriend($$('.addfriendclass').value);$$('.addfriendclass').value='';$$('.addfriendclass').focus()"><i class="fas fa-plus"></i></button>
-    </notskinsearch>
-  `
-
-  const friends = JSON.parse(fs.readFileSync(path.join(directory, 'glc-online', 'friends.json')))
-
-  for (const friend of friends) {
-    final += `
-      <div class="friend-view" style="margin-bottom:2vh;">
-        <h2>${friend} ${await asyncOnlineCheck(friend)} <i onclick="removeFriend('${friend}');skinViewHandler()" class="trash-btn fas fa-trash"></i></h2>
-        <input onkeypress="if(event.charCode===13){sendChatMessage('${friend}',this.parentElement.querySelector('input').value);this.parentElement.querySelector('input').value='';this.parentElement.querySelector('input').focus()}" type="text" placeholder="${isGerman() ? 'Eine Nachricht senden' : 'Send a message'}" />
-        <button class="special-button" onclick="sendChatMessage('${friend}',this.parentElement.querySelector('input').value);this.parentElement.querySelector('input').value='';this.parentElement.querySelector('input').focus()">${isGerman() ? 'Senden' : 'Send'}</button>
-      </div>
-    `
-  }
-
-  return final
-}
-
-async function partyView () {
-
-}
+const { friendView, partyView } = require('./lib/pages/glc-online-views')
 
 // Skin View
 /* global skinview3d */
