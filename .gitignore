@@ -7,3 +7,4 @@ bin/
 obj/
 Launch Green_Lab Client
 build.cmd
+*setup*.exe
