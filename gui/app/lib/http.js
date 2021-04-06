@@ -8,9 +8,14 @@ async function jsonFetch (url) {
   return await (await fetch(url)).json()
 }
 
+async function latestSnapshot () {
+  const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
+  return launchermeta.versions.filter(v => v.type === 'snapshot')[0]
+}
+
 async function getLatest () {
   const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
   return launchermeta.versions.filter((version) => { return version.id === launchermeta.latest.release })[0]
 }
 
-module.exports = { jsonFetch, getLatestMCJSON, getLatest }
+module.exports = { jsonFetch, getLatestMCJSON, getLatest, latestSnapshot }

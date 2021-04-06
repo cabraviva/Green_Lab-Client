@@ -22,6 +22,48 @@ function getLatestInstalledVanilla () {
   return fs.readFileSync(path.join(directory, 'latest.vanilla.num')).toString('utf-8')
 }
 
+// function doSnapshotDL ($dl) {
+//   return new Promise(resolve => {
+//     dlFile($dl, path.join(directory, 'snapshot.jar'), resolve, console.log)
+//   })
+// }
+
+async function installLatestSnapshot () {
+  /* Disabled because not needed. */
+
+  // const { latestSnapshot } = require('./http')
+  // const latest = await latestSnapshot()
+  // let _isNewest = false
+  //
+  // try {
+  //   _isNewest = fs.readFileSync(`${directory}/latest.snapshot`).toString('utf-8') === latest.id
+  // } catch {
+  //   _isNewest = false
+  // }
+  //
+  // if (_isNewest) return console.log('[SnapShot] Already installed')
+  // console.log('[SnapShot] Downloading latest snapshot')
+  // const $mcJSON = await jsonFetch(latest.url)
+  // fs.writeFileSync(path.join(directory, 'snapshot.json'), JSON.stringify($mcJSON))
+  // await doSnapshotDL($mcJSON.downloads.client.url)
+  //
+  // // Downloaf finished
+  // console.log('[SnapShot] Successfully installed')
+  // fs.writeFileSync(path.join(directory, 'latest.snapshot'), latest.id)
+  //
+  // // Copy
+  // console.log('[SnapShot] Cleaning up files...')
+  // try { rimraf.sync(path.join(getAppData(), '.minecraft', 'versions', 'glc-snapshot')) } catch {}
+  // fs.mkdirSync(path.join(getAppData(), '.minecraft', 'versions', 'glc-snapshot'))
+  // console.log('[SnapShot] Copying files...')
+  // fs.copyFileSync(path.join(directory, 'snapshot.jar'), path.join(getAppData(), '.minecraft', 'versions', 'glc-snapshot', `${'glc-snapshot'}.jar`))
+  // fs.copyFileSync(path.join(directory, 'snapshot.json'), path.join(getAppData(), '.minecraft', 'versions', 'glc-snapshot', `${'glc-snapshot'}.json`))
+  // console.log('[SnapShot] Done')
+  //
+  // // Finished
+  // return true
+}
+
 async function installVanilla () {
   const mcdl = await getLatestMCDownload()
   let _isNewest = false
@@ -57,7 +99,8 @@ async function installVanilla () {
 
 if (!fs.existsSync(`${directory}/latest.vanilla`)) fs.writeFileSync(`${directory}/latest.vanilla`, 'NOT_INSTALLED')
 
-installVanilla().then(_ => {
+installVanilla().then(async _ => {
+  await installLatestSnapshot()
   if (!fs.existsSync(`${directory}/lastVersion.optifine`)) fs.writeFileSync(`${directory}/lastVersion.optifine`, 'NOT_INSTALLED')
   if (!fs.existsSync(path.join(directory, 'skins'))) fs.mkdirSync(path.join(directory, 'skins'))
   if (!fs.existsSync(path.join(directory, 'skins/index.json'))) fs.writeFileSync(path.join(directory, 'skins/index.json'), '[]')

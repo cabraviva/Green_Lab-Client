@@ -1,4 +1,4 @@
-/* global fetch, $$, alert */
+/* global fetch, $$ */
 
 const { Client, Authenticator } = require('minecraft-launcher-core')
 const os = require('os-utils')
@@ -138,11 +138,12 @@ async function launchOptiFine (dir = '') {
 }
 window.launchOptiFine = launchOptiFine
 
+async function $launchSnapshot (snapshotID = '') {
+  launchVanilla('', { number: '21w13a', type: 'snapshot' })
+}
+
 async function launchSnapshot () {
-  alert('Snapshot is\'nt available. Try again later.')
-  // Stopping
-  window.runningVanilla = false
-  $$('centeredplaybtn').any('innerText', window.isGerman() ? 'Spielen' : 'Play')
+  $launchSnapshot(fs.readFileSync(path.join(getAppData(), '.Green_Lab-Client-MC', 'latest.snapshot')).toString('utf-8'))
 }
 
 module.exports = { launchVanilla, launchOptiFine, launchSnapshot }
