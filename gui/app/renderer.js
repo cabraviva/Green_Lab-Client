@@ -105,9 +105,10 @@ async function getLatestVersion () {
 }
 
 // Launch
-const { launchVanilla, launchOptiFine } = require('./lib/launch')
+const { launchVanilla, launchOptiFine, launchSnapshot } = require('./lib/launch')
 window.launchVanilla = launchVanilla
 window.launchOptiFine = launchOptiFine
+window.launchSnapshot = launchSnapshot
 
 const { getAccessTokenForMC } = require('./lib/mcapi')
 window.getAccessTokenForMC = getAccessTokenForMC

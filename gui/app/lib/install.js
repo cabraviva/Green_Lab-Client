@@ -6,9 +6,14 @@ const getOptifineDownloadURL = require('./optifine-url.js')
 const path = require('path')
 const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
 const dlFile = require('./dlfile.js')
+const rimraf = require('rimraf')
 
 async function getLatestMCDownload () {
   return (await jsonFetch((await getLatest()).url)).downloads.client.url
+}
+
+function getLatestInstalledVanilla () {
+  return fs.readFileSync(path.join(directory, 'latest.vanilla.num')).toString('utf-8')
 }
 
 async function installVanilla () {
@@ -23,13 +28,24 @@ async function installVanilla () {
   if (_isNewest) { window.isVanillaUpToDate = true; return console.log('[VANILLA] Already installed') }
 
   console.log('Downloading Vanilla')
-  dlFile(mcdl, `${directory}/green_lab-client.jar`, () => {
+  dlFile(mcdl, `${directory}/green_lab-client.jar`, async () => {
+    // Downloaf finished
     getLatest().then(({ id }) => {
       fs.writeFileSync(`${directory}/latest.vanilla.num`, id)
     })
-    fs.writeFileSync(`${directory}/green_lab-client.json`, getLatestMCJSON())
+    fs.writeFileSync(`${directory}/green_lab-client.json`, await getLatestMCJSON())
     console.log('[VANILLA] Successfully installed')
     fs.writeFileSync(`${directory}/latest.vanilla`, mcdl)
+
+    // Copy
+    console.log('[VANILLA] Cleaning up files...')
+    try { rimraf.sync(path.join(getAppData(), '.minecraft', 'versions', getLatestInstalledVanilla())) } catch {}
+    fs.mkdirSync(path.join(getAppData(), '.minecraft', 'versions', getLatestInstalledVanilla()))
+    console.log('[VANILLA] Copying files...')
+    fs.copyFileSync(path.join(directory, 'green_lab-client.jar'), path.join(getAppData(), '.minecraft', 'versions', getLatestInstalledVanilla(), `${getLatestInstalledVanilla()}.jar`))
+    fs.copyFileSync(path.join(directory, 'green_lab-client.json'), path.join(getAppData(), '.minecraft', 'versions', getLatestInstalledVanilla(), `${getLatestInstalledVanilla()}.json`))
+    console.log('[VANILLA] Done')
+    // Finished
     window.isVanillaUpToDate = true
     return true
   }, console.log)

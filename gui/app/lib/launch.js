@@ -1,4 +1,4 @@
-/* global fetch, $$ */
+/* global fetch, $$, alert */
 
 const { Client, Authenticator } = require('minecraft-launcher-core')
 const os = require('os-utils')
@@ -138,4 +138,11 @@ async function launchOptiFine (dir = '') {
 }
 window.launchOptiFine = launchOptiFine
 
-module.exports = { launchVanilla, launchOptiFine }
+async function launchSnapshot () {
+  alert('Snapshot is\'nt available. Try again later.')
+  // Stopping
+  window.runningVanilla = false
+  $$('centeredplaybtn').any('innerText', window.isGerman() ? 'Spielen' : 'Play')
+}
+
+module.exports = { launchVanilla, launchOptiFine, launchSnapshot }
