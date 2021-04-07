@@ -84,6 +84,25 @@ const { changeSkin } = require('./lib/mcapi')
 window.changeSkin = changeSkin
 window.opn = opn
 
+window.coinPopup = () => {
+  const popup = document.createElement('div')
+  popup.classList.add('popup')
+
+  popup.innerHTML = `
+    <i onclick="this.parentElement.outerHTML=''" class="fas fa-chevron-left choose_this" style="position:fixed;top:6vh;left:1vw;"></i>
+
+    <div class="popupc200">
+      <h1 style="text-align:center;">${isGerman() ? 'Einen Code einlösen:' : 'Reedem a code:'}</h1>
+
+      <input type="text" placeholder="Code" />
+      <br />
+      <button onclick="reedemCode(this.parentElement.querySelector('input').value).then(_=>{this.parentElement.parentElement.outerHTML=''});">${isGerman() ? 'Einlösen' : 'Reedem'}</button>
+    </div>
+  `
+
+  $$('body').append(popup)
+}
+
 win.maximizeWindow()
 
 window.runningVanilla = false
@@ -139,6 +158,18 @@ const getCoins = () => {
     socket.emit('getCoins', resolve)
   })
 }
+
+const reedemCode = (code) => {
+  return new Promise(resolve => {
+    if (!socket) return resolve(0)
+    if (!socket.connected) return resolve(0)
+    socket.emit('reedem', code, _c => {
+      coinHandler()
+      resolve(_c)
+    })
+  })
+}
+window.reedem = reedemCode
 
 const coinHandler = () => {
   getCoins().then(coins => {

@@ -9,3 +9,4 @@ Launch Green_Lab Client
 build.cmd
 *setup*.exe
 *.rtf
+/Client
