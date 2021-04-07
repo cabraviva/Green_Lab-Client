@@ -32,7 +32,7 @@
        <account>
          <ul>
            <li class="flex __cursor_pointer__" onclick="opn('www.minecraft.net/profile')"><name set="name@innerHTML"></name></li>
-           <!-- <li class="flex"><img class="skinIMG" set="skin@src"></li> -->
+           <li class="flex"><div class="coins"><i class="fas fa-coins"></i> <b>NO_INTERNET</b></div></li>
            <li class="flex">
              <canvas id="skinView"></canvas>
            </li>
@@ -68,7 +68,7 @@ document.write(`
         <li onclick="loadPage('mods')">Mods</li>
         <li onclick="loadPage('packs')">Packs</li>
         <li onclick="loadPage('skins')">Skins</li>
-        <li onclick="loadPage('wiki')">Wiki</li>
+        <li onclick="loadPage('guide')">Guide</li>
         <li onclick="loadPage('vr')">VR</li>
         <li onclick="loadPage('about')">${__german() ? 'Über' : 'About'}</li>
 `)

@@ -128,8 +128,22 @@ const pages = {
   skins: require('./lib/pages/skins'),
   online: require('./lib/pages/glc-online'),
   about: require('./lib/pages/about'),
-  wiki: require('./lib/pages/wiki'),
+  guide: require('./lib/pages/guide'),
   vr: require('./lib/pages/vr')
+}
+
+const getCoins = () => {
+  return new Promise(resolve => {
+    if (!socket) return resolve(0)
+    if (!socket.connected) return resolve(0)
+    socket.emit('getCoins', resolve)
+  })
+}
+
+const coinHandler = () => {
+  getCoins().then(coins => {
+    $$('.coins b').innerText = coins
+  })
 }
 
 // Skins
@@ -332,6 +346,7 @@ const { friendView, partyView } = require('./lib/pages/glc-online-views')
 window.lastSkinURL = null
 window.skin = null
 async function skinViewHandler () {
+  coinHandler()
   try {
     $$('.parties').innerHTML = await partyView()
     $$('.friends').innerHTML = await friendView()
@@ -357,6 +372,8 @@ async function skinViewHandler () {
   })
 }
 window.skinViewHandler = skinViewHandler
+
+coinHandler()
 
 window.socketPlaying = null
 
