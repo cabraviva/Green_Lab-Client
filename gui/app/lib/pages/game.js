@@ -11,7 +11,7 @@ module.exports = async () => {
     </ul>
     <div class="content optifine" style="overflow:hidden;padding:0;margin:0">
       <div class="flexer">
-        <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchOptiFine()}">${isGerman() ? 'Spielen' : 'Play'}</centeredplaybtn>
+        <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchOptiFine()}">${!window.runningVanilla ? (isGerman() ? 'Spielen' : 'Play') : (isGerman() ? 'Spiel läuft bereits' : 'Running')}</centeredplaybtn>
       </div>
     </div>
     <div class="content vanilla" style="overflow:hidden;padding:0;margin:0;display:none;">
@@ -21,7 +21,13 @@ module.exports = async () => {
     </div>
     <div class="content snapshot" style="overflow:hidden;padding:0;margin:0;display:none;">
       <div class="flexer">
-        <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchSnapshot()}">${isGerman() ? 'Spielen' : 'Play'}</centeredplaybtn>
+        <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchSnapshot()}">${!window.runningVanilla ? (isGerman() ? 'Spielen' : 'Play') : (isGerman() ? 'Spiel läuft bereits' : 'Running')}</centeredplaybtn>
+      </div>
+    </div>
+
+    <div class="content glc" style="overflow:hidden;padding:0;margin:0;display:none;">
+      <div class="flexer">
+        <centeredplaybtn onclick="if(runningVanilla==false){$$('centeredplaybtn').any('innerText', '${isGerman() ? 'Spiel läuft bereits' : 'Runnning'}');runningVanilla=true;launchSnapshot()}">${!window.runningVanilla ? (isGerman() ? 'Spielen' : 'Play') : (isGerman() ? 'Spiel läuft bereits' : 'Running')}</centeredplaybtn>
       </div>
     </div>
 

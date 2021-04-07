@@ -128,6 +128,7 @@ const pages = {
   skins: require('./lib/pages/skins'),
   online: require('./lib/pages/glc-online'),
   about: require('./lib/pages/about'),
+  wiki: require('./lib/pages/wiki'),
   vr: require('./lib/pages/vr')
 }
 

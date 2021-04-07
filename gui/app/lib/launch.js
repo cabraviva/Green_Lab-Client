@@ -139,7 +139,7 @@ async function launchOptiFine (dir = '') {
 window.launchOptiFine = launchOptiFine
 
 async function $launchSnapshot (snapshotID = '') {
-  launchVanilla('', { number: '21w13a', type: 'snapshot' })
+  launchVanilla('', { number: snapshotID, type: 'snapshot' })
 }
 
 async function launchSnapshot () {

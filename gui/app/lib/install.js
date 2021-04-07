@@ -31,25 +31,25 @@ function getLatestInstalledVanilla () {
 async function installLatestSnapshot () {
   /* Disabled because not needed. */
 
-  // const { latestSnapshot } = require('./http')
-  // const latest = await latestSnapshot()
-  // let _isNewest = false
+  const { latestSnapshot } = require('./http')
+  const latest = await latestSnapshot()
+  let _isNewest = false
   //
-  // try {
-  //   _isNewest = fs.readFileSync(`${directory}/latest.snapshot`).toString('utf-8') === latest.id
-  // } catch {
-  //   _isNewest = false
-  // }
+  try {
+    _isNewest = fs.readFileSync(`${directory}/latest.snapshot`).toString('utf-8') === latest.id
+  } catch {
+    _isNewest = false
+  }
   //
-  // if (_isNewest) return console.log('[SnapShot] Already installed')
-  // console.log('[SnapShot] Downloading latest snapshot')
-  // const $mcJSON = await jsonFetch(latest.url)
-  // fs.writeFileSync(path.join(directory, 'snapshot.json'), JSON.stringify($mcJSON))
+  if (_isNewest) return console.log('[SnapShot] Already installed')
+  console.log('[SnapShot] Downloading latest snapshot')
+  const $mcJSON = await jsonFetch(latest.url)
+  fs.writeFileSync(path.join(directory, 'snapshot.json'), JSON.stringify($mcJSON))
   // await doSnapshotDL($mcJSON.downloads.client.url)
   //
-  // // Downloaf finished
-  // console.log('[SnapShot] Successfully installed')
-  // fs.writeFileSync(path.join(directory, 'latest.snapshot'), latest.id)
+  // // Download finished
+  console.log('[SnapShot] Successfully installed')
+  fs.writeFileSync(path.join(directory, 'latest.snapshot'), latest.id)
   //
   // // Copy
   // console.log('[SnapShot] Cleaning up files...')
