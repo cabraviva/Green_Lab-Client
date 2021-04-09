@@ -455,12 +455,13 @@ const up2IH = () => {
   if (window.isOptiFineUpToDate && window.isVanillaUpToDate) {
     clearInterval(window.up2DateInterval)
     $$('.up2DateWaitingScreen').outerHTML = ''
+    $$('#view-blocker').hide()
   } else {
     try {
       $$('.up2DateWaitingScreen')
     } catch {
       $$('body').innerHTML += `
-        <div class="popup up2DateWaitingScreen"><h1 style="text-align:center;">${isGerman() ? 'Minecraft wird installiert' : 'Installing Minecraft'}</h1></div>
+        <div class="popup up2DateWaitingScreen"><h1 style="text-align:center;">${isGerman() ? 'Spiele werden installiert...' : 'Installing...'}</h1></div>
       `
     }
   }

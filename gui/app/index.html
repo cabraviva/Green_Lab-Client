@@ -62,7 +62,7 @@ window.__german = __german
 
 /* global $ */
 document.write(`
-        <li onclick="loadPage('game')">${__german() ? 'Spiel' : 'Game'}</li>
+        <li onclick="loadPage('game')">Minecraft</li>
         <li onclick="loadPage('worlds')">${__german() ? 'Welten' : 'Worlds'}</li>
         <li onclick="loadPage('online')">GLC Online</li>
         <li onclick="loadPage('mods')">Mods</li>
@@ -70,6 +70,7 @@ document.write(`
         <li onclick="loadPage('skins')">Skins</li>
         <li onclick="loadPage('guide')">Guide</li>
         <li onclick="loadPage('vr')">VR</li>
+        <li onclick="loadPage('games')">${__german() ? 'Spiele' : 'Games'}</li>
         <li onclick="loadPage('about')">${__german() ? 'Über' : 'About'}</li>
 `)
          </script>
@@ -81,6 +82,8 @@ document.write(`
      </main>
    </div>
 
-  </body>
+   <div id="view-blocker" style="width:100vw;overflow:hidden;height:100vh;position:fixed;top:0;left:0;z-index:10000;background:#2d2d2d;"></div>
+
+   </body>
   <script src="./renderer.js"></script>
 </html>
