@@ -4,6 +4,18 @@ window.isGerman = isGerman
 const mergeImages = require('merge-images')
 window.socket = null
 
+function log (msg) {
+  const date = `${(new Date()).toDateString()} ${new Date().getHours()} ${new Date().getMinutes()}`
+  const fs = require('fs')
+  const path = require('path')
+  const appData = window.__getAppData()
+  const logFile = path.join(appData, 'Green_Lab Client.log')
+  if (!fs.existsSync(logFile)) fs.writeFileSync(logFile, '# Green_Lab Client Log')
+  fs.writeFileSync(logFile, `${fs.readFileSync(logFile).toString('utf-8')}\n[${date}] ${msg}`)
+}
+
+window.log = log
+
 const { getAccount, setAccount } = require('./lib/mcapi')
 
 /* global Notification */
@@ -62,6 +74,7 @@ window.mergeCosmeticTexturesToSkin = mergeCosmeticTexturesToSkin
 
 window._log = console.log
 console.log = (...logs) => {
+  log('[CONSOLE] ' + logs[0])
   logs.forEach((item) => {
     try {
       if (item.includes('THREE.WebGLRenderer: Context Lost.')) reloadLauncher()
@@ -186,6 +199,7 @@ window.searchForSkin = searchForSkin
 
 /* global $ */
 function reloadLauncher () {
+  log('Launcher is reloading...')
   try {
     if (fs.readFileSync(`${getAppData()}/Green_Lab-Client.refreshed.file`).toString('utf-8') === 'true') return
   } catch {
@@ -456,6 +470,11 @@ const up2IH = () => {
     clearInterval(window.up2DateInterval)
     $$('.up2DateWaitingScreen').outerHTML = ''
     $$('#view-blocker').hide()
+
+    if ($.storage.session.get('callPage') !== null && $.storage.session.get('callPage') !== 'null') {
+      loadPage($.storage.session.get('callPage'))
+      $.storage.session.set('callPage', null)
+    }
   } else {
     try {
       $$('.up2DateWaitingScreen')
@@ -473,9 +492,12 @@ up2IH()
   process.versions.minecraft = await getLatestVersion()
 })()
 
+log('Client loaded')
+
 const dc = require('./lib/discord')
 dc.setActivity({
   details: 'Idle',
   largeImageKey: 'icon',
   startTimestamp: dc.getActivity().startTimestamp
 })
+log('Set Discord IDLE Activity')

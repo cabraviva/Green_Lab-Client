@@ -1,4 +1,8 @@
 const isGerman = require('../lang.js')
+const fs = require('fs')
+const path = require('path')
+const getAppData = window.__getAppData
+const directory = path.join(getAppData(), '.Green_Lab-Client-MC')
 
 module.exports = async () => {
   return `
@@ -13,6 +17,10 @@ module.exports = async () => {
         <li><a onclick="event.preventDefault();opn(this.href)" href="https://www.electronjs.org">Electron</a> ${isGerman() ? 'für das coole Framework, um den Client zu erstellen' : 'for the cool framework to create the app'}</li>
         <li><a onclick="event.preventDefault();opn(this.href)" href="https://github.com/Pierce01/MinecraftLauncher-core#readme">minecraft-launcher-core</a> ${isGerman() ? 'für das NPM Modul, welches es erst möglich machte, Minecraft zu starten' : 'for the npm module, to make it possible to run Minecraft'}</li>
       </ul>
+
+      GLC Online <label class="switch"><input oninput="if(this.checked){enableGLC()}else{disableGLC()};$.storage.session.set('callPage', 'about');$.page.refresh()" type="checkbox"${(fs.readFileSync(path.join(directory, 'glc-online', '.enabled')).toString('utf-8') === 'true') ? ' checked' : ''}><span class="slider round"></span></label><br /><br />
+      ${isGerman() ? 'Englische Version des Clients' : 'Use only english language'} <label class="switch"><input oninput="$.storage.session.set('callPage', 'about');if(this.checked){enableEnglishOnly()}else{disableEnglishOnly()}" type="checkbox"${(fs.readFileSync(path.join(directory, 'english-only.enabled')).toString('utf-8') === 'true') ? ' checked' : ''}><span class="slider round"></span></label><br /><br />
+      ${isGerman() ? 'Freundschaftsanfragen' : 'Receive friend requests'} <label class="switch"><input oninput="$.storage.session.set('callPage', 'about');if(this.checked){enableFR()}else{disableFR()};$.page.refresh()" type="checkbox"${(fs.readFileSync((path.join(directory, 'glc-online', 'fr.enabled'))).toString('utf-8') === 'true') ? ' checked' : ''}><span class="slider round"></span></label><br /><br />
     </div>
   `
 }
