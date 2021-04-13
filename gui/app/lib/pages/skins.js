@@ -3,6 +3,11 @@ const { getAppData } = require('../glc-path')
 const isGerman = require('../lang.js')
 const { jsonFetch } = require('../http')
 
+function getSkinIndex (num = 6, page = 0) {
+  const skinDex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
+  return skinDex
+}
+
 const listCosmetics = async () => {
   const cosmetics = await jsonFetch('https://greenlabclient.greencoder001.repl.co/skin-editor/cosmetics/list/')
   return cosmetics
@@ -14,7 +19,7 @@ async function getCosmeticByID (id) {
 
 module.exports = async () => {
   let allSkins = ''
-  const skinIndex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
+  const skinIndex = getSkinIndex(6)
   skinIndex.forEach((skin, index) => {
     if (skin === null) return
     allSkins += `
