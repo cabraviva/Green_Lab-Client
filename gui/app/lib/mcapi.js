@@ -81,11 +81,21 @@ function changeSkin (skinID) {
           const walkAnimation = window.skin.animations.add(window.skinview3d.WalkingAnimation)
           walkAnimation.speed = 1
         })
-      }).catch((err) => {
-        if (window.isGerman()) {
-          window.alert(`Fehler: Der Skin ${skinID} wurde nicht von Minecraft akzeptiert. Bitte wähle einen anderen Skin aus`)
+      }).catch(async (err) => {
+        if (err.message.toLowerCase().includes('current ip not secured')) {
+          if (window.isGerman()) {
+            window.alert(`Minecraft hat uns gemeldet, dass du dich in letzter Zeit nicht mit deinem Account angemeldet hast. Bitte klicke auf deinen Namen oben links (${await window.getIGN()}) und melde dich an!`)
+          } else {
+            window.alert(`Minecraft has reported that you haven't recently signed in to your account. Please click on your name at the top left (${await window.getIGN()}) and sign up!`)
+          }
         } else {
-          window.alert('Skin Error: The Skin ' + skinID + ' is not valid. Please chosse an other Skin')
+          if (window.isGerman()) {
+            window.alert(`Fehler: Der Skin ${skinID} wurde nicht von Minecraft akzeptiert. Bitte wähle einen anderen Skin aus`)
+          } else {
+            window.alert('Skin Error: The Skin ' + skinID + ' is not valid. Please chosse an other Skin')
+          }
+
+          window.alert('More informations in the log file!')
         }
         console.error(err)
       })
