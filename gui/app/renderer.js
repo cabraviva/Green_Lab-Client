@@ -4,6 +4,16 @@ window.isGerman = isGerman
 const mergeImages = require('merge-images')
 window.socket = null
 
+function readLog () {
+  const fs = require('fs')
+  const path = require('path')
+  const appData = window.__getAppData()
+  const logFile = path.join(appData, 'Green_Lab Client.log')
+  return fs.readFileSync(logFile).toString('utf-8').split('\n')
+}
+
+window.readLog = readLog
+
 function log (msg) {
   const date = `${(new Date()).toDateString()} ${new Date().getHours()} ${new Date().getMinutes()}`
   const fs = require('fs')
