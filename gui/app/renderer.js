@@ -218,6 +218,7 @@ function reloadLauncher () {
   }
 
   fs.writeFileSync(`${getAppData()}/Green_Lab-Client.refreshed.file`, 'true')
+  $.storage.session.set('callPage', currentPage)
   $.page.refresh()
 }
 

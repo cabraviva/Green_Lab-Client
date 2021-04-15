@@ -1,11 +1,44 @@
+/* global $ */
+
 const fs = require('fs')
 const { getAppData } = require('../glc-path')
 const isGerman = require('../lang.js')
 const { jsonFetch } = require('../http')
 
+const countLength = (arr, max = 6) => Math.ceil(arr.length / max)
+
+const countPages = (num = 6, page = 0) => {
+  const skinDex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
+  const pagesCount = countLength(skinDex, num)
+  return pagesCount
+}
+
+const getSessionSkinPage = () => parseInt($.storage.session.get('skinsp')) || 0
+const setSessionSkinPage = (p = 0) => { $.storage.session.set('skinsp', p); return getSessionSkinPage() }
+
+window.getSessionSkinPage = getSessionSkinPage
+window.setSessionSkinPage = setSessionSkinPage
+window.sCp = countPages
+
+const showLeftArrow = cp => cp > 0
+const showRightArrow = cp => { return countPages() - cp > 1 }
+
+window.showLeftArrowS = showLeftArrow
+window.showRightArrowS = showRightArrow
+
 function getSkinIndex (num = 6, page = 0) {
   const skinDex = JSON.parse(fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/skins/index.json`))
-  return skinDex
+  const pages = []
+
+  const pagesCount = countLength(skinDex, num)
+  let pc = 0
+
+  while (pc !== pagesCount) {
+    pages.push(skinDex.slice(pc * num, (pc * num) + num))
+    pc += 1
+  }
+
+  return pages[page]
 }
 
 const listCosmetics = async () => {
@@ -17,9 +50,21 @@ async function getCosmeticByID (id) {
   return await jsonFetch(`https://greenlabclient.greencoder001.repl.co/skin-editor/cosmetics/view/${id}`)
 }
 
+const sfwd = () => {
+  setSessionSkinPage(getSessionSkinPage() + 1)
+}
+
+const sbck = () => {
+  setSessionSkinPage(getSessionSkinPage() - 1)
+}
+
+window.sfwd = sfwd
+window.sbck = sbck
+
 module.exports = async () => {
   let allSkins = ''
-  const skinIndex = getSkinIndex(6)
+  const skinIndex = getSkinIndex(6, getSessionSkinPage())
+  console.log(skinIndex)
   skinIndex.forEach((skin, index) => {
     if (skin === null) return
     allSkins += `
@@ -163,6 +208,8 @@ module.exports = async () => {
           <ul>
             ${allSkins}
           </ul>
+          ${showLeftArrow(getSessionSkinPage()) ? '<i class="leftskinarrow fas fa-caret-left" onclick="sbck();reloadLauncher()"></i>' : ''}
+          ${showRightArrow(getSessionSkinPage()) ? '<i class="rightskinarrow fas fa-caret-right" onclick="sfwd();reloadLauncher()"></i>' : ''}
         </skinbox>
       </div>
     </div>
