@@ -1,6 +1,11 @@
 $nav-width: 25vw
 @import colors
 
+.flex
+  display: flex
+  justify-content: center
+  align-items: center
+
 @font-face
   font-family: 'mc'
   font-display: swap
@@ -127,9 +132,7 @@ main
         text-decoration: underline
 
     &.flex
-      display: flex
-      justify-content: center
-      align-items: center
+      @extend .flex
 
     centeredplaybtn
       color: #fff

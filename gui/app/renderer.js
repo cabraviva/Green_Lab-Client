@@ -1,4 +1,35 @@
-/* global $$, fetch, socket, __german */
+/* global $$, fetch, socket, __german, banned */
+
+const win = require('./lib/win.js')
+window.win = win
+
+// Offline Check:
+console.log(banned ? 'Network is offline' : 'Network is online')
+
+if (banned) {
+  $$('#view-blocker').style.height = '95vh'
+  $$('#view-blocker').style.bottom = '0'
+  $$('#view-blocker').style.top = '5vh'
+  $$('#view-blocker').innerHTML = `
+    <h1 class="stylemeh">${__german() ? 'Das Green_Lab Client Netzwerk ist gerade offline' : 'The Green_Lab Client Network is currently offline'}</h1>
+    <h2 class="stylemeh">${__german() ? 'Dies kann zum Beispiel an Wartungsarbeiten am Client liegen' : 'This can be due to maintenance work on the client, for example'}</h2>
+    <div class="flex"><button id="cbtn" onclick="win.closeWindow()">Close Client</button></div><br />
+    <div class="flex"><button id="cbtn2" onclick="$.page.refresh()">Reload Client</button></div>
+  `
+
+  $$('.stylemeh').any('style.textAlign', 'center')
+  $$('.stylemeh').any('style.color', '#fff')
+  $$('button#cbtn').style.height = 'auto'
+  $$('button#cbtn').style.padding = '1%'
+  $$('button#cbtn').style.border = '1px solid white'
+  $$('button#cbtn2').style.height = 'auto'
+  $$('button#cbtn2').style.padding = '1%'
+  $$('button#cbtn2').style.border = '1px solid white'
+
+  throw new Error('Network is offline')
+}
+// #############
+
 const isGerman = __german
 window.isGerman = isGerman
 const mergeImages = require('merge-images')
@@ -97,7 +128,6 @@ const random = require('./lib/random.js')
 const dlFile = require('./lib/dlfile.js')
 
 const path = require('path')
-const win = require('./lib/win.js')
 const opn = require('opn')
 const { v4: uuidv4 } = require('uuid')
 
