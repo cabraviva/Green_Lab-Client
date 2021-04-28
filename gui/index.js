@@ -2,6 +2,22 @@
 const { app, BrowserWindow } = require('electron')
 const dcClientID = '777488569345769482'
 const client = require('discord-rich-presence')(dcClientID)
+const ngrok = require('ngrok')
+
+// Socketio
+const ioserver = require('./io-server.js')
+ioserver.onSocket(socket => {
+  socket.on('DLOG', console.log)
+
+  // NGROK
+  socket.on('killNgrok', () => {
+    ngrok.kill()
+  })
+
+  socket.on('spawnNgrok', (port, resolve) => {
+    ngrok.connect(port).then(resolve).catch(resolve)
+  })
+})
 
 function createWindow () {
   // Create the browser window.
@@ -50,6 +66,7 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
+  ngrok.kill()
   if (process.platform !== 'darwin') app.quit()
 })
 

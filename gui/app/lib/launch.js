@@ -8,11 +8,30 @@ const { /* isWin, */ getAppData } = require('./glc-path')
 const win = require('./win.js')
 const dc = require('./discord')
 const fs = require('fs')
+const { openToWorld } = require('./otw')
 
 async function getLatestVersion () {
   const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
   return launchermeta.latest.release
   // return JSON.parse(fs.readFileSync(path.join(getAppData(), path.join('.minecraft', 'versions/version_manifest_v2.json')))).latest
+}
+
+async function handleMcLaunchDataT (data, i) {
+  data = data.toLowerCase()
+
+  if (data.includes('started serving on')) {
+    // Open to LAN => Open to World using Ngrok
+
+    const port = data.replace(/(.*?)started serving on ([0-9]*?)(.*?)$/gim, '$3').trim()
+    console.log('port', port)
+    openToWorld(port)
+  }
+}
+
+async function handleMcLaunchData (data) {
+  data.split('\n').forEach((item, i) => {
+    handleMcLaunchDataT(item, i)
+  })
 }
 
 function mcRam () {
@@ -46,6 +65,7 @@ async function launchVanilla (dir = '', version = { number: null, type: 'release
   win.minimizeWindow()
   launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
   launcher.on('data', (e) => {
+    handleMcLaunchData(e)
     if (window.playingSinglePlayer === '!no') {
       if (e.includes('Saving chunks for level') && !e.includes('all chunks') && !e.includes('All chunks')) window.playingSinglePlayer = false
     } else {
@@ -101,6 +121,7 @@ async function launchOptiFine (dir = '') {
   win.minimizeWindow()
   launcher.on('debug', (e) => console.log('[DEBUG] ' + e))
   launcher.on('data', (e) => {
+    handleMcLaunchData(e)
     if ((e.includes('[Render thread/INFO]: Stopping!') || e.includes('[main/INFO]: Stopping!')) && (!e.includes('<'))) {
       // Stopping
       window.runningVanilla = false

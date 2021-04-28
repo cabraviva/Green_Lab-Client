@@ -90,6 +90,10 @@ class PushNotification extends RawPushNotification {
 }
 window.PushNotification = PushNotification
 
+// GLC_MAIN
+window.main = window.io('ws://localhost:57743')
+// #######
+
 const sortCosmeticTexturesByPriority = (rawTextures) => {
   const textures = rawTextures.sort((last, current) => {
     if (last.priority > current.priority) return 1
@@ -164,11 +168,18 @@ const { /* isWin, */ getAppData } = require('./lib/glc-path')
 const { getVersion } = require('./lib/info')
 const { jsonFetch, getLatest } = require('./lib/http')
 window.getVersion = getVersion
+window.jsonFetch = jsonFetch
 
 async function getLatestMCDownload () {
   return (await jsonFetch((await getLatest()).url)).downloads.client.url
 }
+
+async function getLatestServerDownload () {
+  return (await jsonFetch((await getLatest()).url)).downloads.server.url
+}
+
 window.getLatestMCDownload = getLatestMCDownload
+window.getLatestServerDownload = getLatestServerDownload
 window.getLatest = getLatest
 async function getLatestVersion () {
   const launchermeta = await (await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json')).json()
@@ -194,6 +205,8 @@ function loadPage (id) {
   })
 }
 
+window.loadPage = loadPage
+
 const pages = {
   game: require('./lib/pages/game'),
   worlds: require('./lib/pages/worlds'),
@@ -201,7 +214,8 @@ const pages = {
   online: require('./lib/pages/glc-online'),
   about: require('./lib/pages/about'),
   guide: require('./lib/pages/guide'),
-  vr: require('./lib/pages/vr')
+  // vr: require('./lib/pages/vr'),
+  server: require('./lib/pages/server')
 }
 
 const getCoins = () => {
