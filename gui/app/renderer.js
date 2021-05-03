@@ -272,6 +272,8 @@ window.addEventListener('keydown', (e) => {
   }
 })
 
+window.reloadLauncher = reloadLauncher
+
 const prompt = require('electron-prompt')
 async function chooseLocalSkin () {
   addLocalSkin((await prompt({ title: isGerman() ? 'Skin hinzufügen' : 'Add Skin', label: isGerman() ? 'Gib einen Namen für den neuen Skin ein:' : 'Enter a name for the skin:', value: 'Skin', type: 'input' })), await openFile())
