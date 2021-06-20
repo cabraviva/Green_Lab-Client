@@ -25,7 +25,7 @@ const openToWorld = async port => {
     body: isGerman() ? 'Die IP wurde in deine Zwischenablage kopiert' : 'The IP has been copied to your clipboard'
   })
 
-  console.log(`[OWT] Connected to ${url}`)
+  console.log(`[OTW] Connected to ${url}`)
   notification.send()
 }
 

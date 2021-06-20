@@ -363,6 +363,8 @@ async function getIGN () {
   return ((await getAccessTokenForMC()).selectedProfile.name)
 }
 
+window.getIGN = getIGN
+
 async function __ignHandler () {
   try {
     const __acc = getAccount()

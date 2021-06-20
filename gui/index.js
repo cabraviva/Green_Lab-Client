@@ -17,6 +17,42 @@ ioserver.onSocket(socket => {
   socket.on('spawnNgrok', (port, resolve) => {
     ngrok.connect(port).then(resolve).catch(resolve)
   })
+
+  // MSMC
+  socket.on('msmc', (prompt = 'select_account', success) => {
+    require("msmc").getElectron().FastLaunch(
+      (call) => {
+        // The function is called when the login has been successful
+        console.log("Login successful");
+        var accessToken = call.access_token
+        var profile = call.profile
+
+        success(accessToken, profile)
+      },
+      (update) => {
+        // A hook for catching loading bar events and errors
+        // Possible types are: Starting, Loading, Rejection, Error
+        switch (update.type) {
+          case "Starting":
+            console.log("Checking user started!");
+            break;
+          case "Loading":
+            console.log("Loading:", update.data, "-", update.percent + "%");
+            break;
+          case "Rejection":
+            console.error("Fetch rejected!", update.data);
+            break;
+          case "Error":
+            console.error("MC-Account error:", update.data);
+            break;
+          case "Canceled":
+            console.error("User clicked cancel!")
+            break;
+        }
+      },
+      prompt
+    )
+  })
 })
 
 function createWindow () {
