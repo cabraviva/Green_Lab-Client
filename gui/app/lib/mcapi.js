@@ -63,7 +63,8 @@ async function getAccessTokenForMC () {
       accessToken,
       clientToken: 'IDK',
       availableProfiles: [profile],
-      selectedProfile: profile
+      selectedProfile: profile,
+      isMSAcc: true
     }
   }
 
@@ -75,6 +76,11 @@ async function getAccessTokenForMC () {
     username: account.email,
     password: account.pw
   }, { 'Content-Type': 'application/json' })).data
+}
+
+window.isMSAcc = () => {
+  const account = getAccount()
+  return account.email === 'MSLOGIN'
 }
 
 function changeSkin (skinID) {
