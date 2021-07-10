@@ -41,6 +41,7 @@
        </account>
        <ul class="_nav">
          <script type="text/javascript">
+if (!require('fs').existsSync(require('path').join(__getAppData(), '.Green_Lab-Client-MC'))) require('fs').mkdirSync(require('path').join(__getAppData(), '.Green_Lab-Client-MC'))
 if (!require('fs').existsSync(require('path').join(__getAppData(), '.Green_Lab-Client-MC', 'english-only.enabled'))) require('fs').writeFileSync((require('path').join(__getAppData(), '.Green_Lab-Client-MC', 'english-only.enabled')), 'false')
 
 function __isWin () {
