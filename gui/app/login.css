@@ -43,3 +43,14 @@ button:hover {
   background: #0d7400;
   cursor: pointer;
 }
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background: #303030;
+  z-index: 1000;
+  color: rgb(255, 255, 255);
+}
