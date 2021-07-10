@@ -49,13 +49,17 @@ var sets = {
 
         </head>
 
-        <body style="background:url('mansion.png');background-size:cover;">
+        <body style="background:url('pictures/mansion.png');background-size:cover;">
             <div><h1>Login</h1></div>
             <div><input type="text" placeholder="InGame-Name" /></div>
             <div><input type="email" placeholder="E-Mail" /></div>
             <div><input type="password" placeholder="Passwor${window.isGerman() ? 't' : 'd'}" /></div>
 
             <div><button onclick="setAccount(document.querySelectorAll('div input')[0].value, document.querySelectorAll('div input')[1].value, document.querySelectorAll('div input')[2].value);location.reload()">Login</button></div>
+            <div><h2 style="font-size:300%;color:#7a7a7a;">OR</h2></div>
+
+            <div><button onclick="main.emit('msmc', 'select_account', (accessToken, profile) => {setAccount(profile.name, 'MSLOGIN', 'MSLOGIN');location.reload()})">Login with Microsoft</button></div>
+
         </body>
       `
       return null

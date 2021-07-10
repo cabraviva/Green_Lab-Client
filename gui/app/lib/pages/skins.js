@@ -34,7 +34,7 @@ function getSkinIndex (num = 6, page = 0) {
   let pc = 0
 
   while (pc !== pagesCount) {
-    pages.push(skinDex.slice(pc * num, (pc * num) + num))
+    pages.push((skinDex.slice(pc * num, (pc * num) + num)))
     pc += 1
   }
 

@@ -44,8 +44,29 @@ function getSkin (cb) {
   })
 }
 
+function getMSAccessToken () {
+  return new Promise(resolve => {
+    main.emit('msmc', 'none', (accessToken, profile) => {
+      resolve([accessToken, profile])
+    })
+  })
+}
+
 async function getAccessTokenForMC () {
   const account = getAccount()
+
+  const isMSAcc = account.email === 'MSLOGIN'
+
+  if (isMSAcc) {
+    const [accessToken, profile] = await getMSAccessToken()
+    return {
+      accessToken,
+      clientToken: 'IDK',
+      availableProfiles: [profile],
+      selectedProfile: profile
+    }
+  }
+
   return (await axios.post('https://authserver.mojang.com/authenticate', {
     agent: {
       name: 'Minecraft',

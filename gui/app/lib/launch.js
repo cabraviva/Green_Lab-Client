@@ -37,9 +37,11 @@ async function handleMcLaunchData (data) {
 function mcRam () {
   return {
     min: (Math.round(Math.round(os.totalmem()) / 1024) / 2) - (Math.round(Math.round(os.totalmem()) / 3 / 1024)),
-    max: (Math.round(Math.round(os.totalmem()) / 1024) / 2)
+    max: (Math.round(Math.round(os.totalmem()) / 1024) / 3)
   }
 }
+
+window.mcRam = mcRam
 
 function auth () {
   const acc = getAccount()
