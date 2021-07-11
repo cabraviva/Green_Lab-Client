@@ -16,7 +16,7 @@ function getAccount () {
       email: acc.email,
       pw: atob(acc.pw)
     }
-  } catch {
+  } catch (_err) {
     return false
   }
 }
@@ -31,7 +31,7 @@ function getUUID (name, cb) {
     waitfor(zGET({ url: `https://api.mojang.com/users/profiles/minecraft/${getAccount().name}` }), (v) => {
       cb(JSON.parse(v).id)
     })
-  } catch {
+  } catch (_err) {
     $.page.refresh()
   }
 }
