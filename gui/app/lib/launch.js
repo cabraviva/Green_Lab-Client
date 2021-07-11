@@ -43,8 +43,23 @@ function mcRam () {
 
 window.mcRam = mcRam
 
-function auth () {
+function getMSAccessToken () {
+  return new Promise(resolve => {
+    main.emit('msmc', 'none', (accessToken, profile, mclcAuth) => {
+      resolve([accessToken, profile, mclcAuth])
+    })
+  })
+}
+
+async function auth () {
   const acc = getAccount()
+
+  const isMsAcc = acc.email === 'MSLOGIN'
+
+  if (isMsAcc) {
+    const [accessToken, profile, mclcAuth] = await getMSAccessToken()
+    return new Promise(resolve => resolve(mclcAuth))
+  }
   return Authenticator.getAuth(acc.email, acc.pw)
 }
 
@@ -54,7 +69,7 @@ async function launchVanilla (dir = '', version = { number: null, type: 'release
 
   const opts = {
     clientPackage: null,
-    authorization: auth(),
+    authorization: await auth(),
     root: path.join(getAppData(), path.join('.minecraft', dir)),
     version,
     memory: {
@@ -110,7 +125,7 @@ async function launchOptiFine (dir = '') {
 
   const opts = {
     clientPackage: null,
-    authorization: auth(),
+    authorization: await auth(),
     root: path.join(getAppData(), path.join('.minecraft', dir)),
     version: { type: 'release', number: (fs.readFileSync(`${getAppData()}/.Green_Lab-Client-MC/latest.optifine.mc.num`).toString('utf-8')), custom: 'of' },
     memory: {
@@ -169,4 +184,4 @@ async function launchSnapshot () {
   $launchSnapshot(fs.readFileSync(path.join(getAppData(), '.Green_Lab-Client-MC', 'latest.snapshot')).toString('utf-8'))
 }
 
-module.exports = { launchVanilla, launchOptiFine, launchSnapshot }
+module.exports = { launchVanilla, launchOptiFine, launchSnapshot, auth }

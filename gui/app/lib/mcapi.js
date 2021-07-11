@@ -46,8 +46,8 @@ function getSkin (cb) {
 
 function getMSAccessToken () {
   return new Promise(resolve => {
-    main.emit('msmc', 'none', (accessToken, profile) => {
-      resolve([accessToken, profile])
+    main.emit('msmc', 'none', (accessToken, profile, mclcAuth) => {
+      resolve([accessToken, profile, mclcAuth])
     })
   })
 }
@@ -58,7 +58,7 @@ async function getAccessTokenForMC () {
   const isMSAcc = account.email === 'MSLOGIN'
 
   if (isMSAcc) {
-    const [accessToken, profile] = await getMSAccessToken()
+    const [accessToken, profile, mclcAuth] = await getMSAccessToken()
     return {
       accessToken,
       clientToken: 'IDK',
